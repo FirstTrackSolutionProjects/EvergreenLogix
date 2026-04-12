@@ -1,5 +1,3 @@
-
-
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -19,16 +17,14 @@ const Footer = () => {
       className="relative z-10 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-900 text-white"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Company Info */}
           <div>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-tr from-emerald-400 via-sky-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">SC</span>
-              </div>
-              <span className="font-bold text-lg">Shopy Courier</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
+            <Link to="/" className="flex items-center space-x-3 mb-6 group"> {/* Made logo clickable */}
+              <img src="/Logo.png" alt="Shopy Courier Logo" className="w-12 h-12 rounded-lg group-hover:scale-105 transition-transform duration-200" />
+              <span className="font-bold text-lg group-hover:text-emerald-300 transition-colors duration-200">Shopy Courier</span>
+            </Link>
+            <p className="text-slate-300 leading-relaxed text-sm">
               Shopy Courier delivers fast, reliable, and seamless logistics
               solutions, ensuring timely and secure shipments worldwide.
             </p>
@@ -39,20 +35,24 @@ const Footer = () => {
             <h3 className="text-lg font-bold mb-6 text-emerald-400">
               Contact Us
             </h3>
-            <div className="space-y-4 text-slate-300">
-              <div className="flex gap-3">
-                <MapPin className="w-5 h-5 text-emerald-500" />
-                <span>ABC, India, Odisha </span>
+            <div className="space-y-4 text-slate-300 text-sm">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                <span>ABC, India, Odisha, Pincode: 123456</span>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-emerald-500" />
-                <span>+91 1234567890</span>
+                <a href="tel:+911234567890" className="hover:text-emerald-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded"> {/* Added focus styles */}
+                  +91 1234567890
+                </a>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-emerald-500" />
-                <span>info@shopycourier.site</span>
+                <a href="mailto:info@shopycourier.site" className="hover:text-emerald-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded"> {/* Added focus styles */}
+                  info@shopycourier.site
+                </a>
               </div>
             </div>
           </div>
@@ -62,10 +62,10 @@ const Footer = () => {
             <h3 className="text-lg font-bold mb-6 text-emerald-400">
               Our Services
             </h3>
-            <ul className="space-y-3 text-slate-300">
-              <li>Pick & Drop</li>
-              <li>Packaging</li>
-              <li>International & Domestic Services</li>
+            <ul className="space-y-3 text-slate-300 text-sm">
+              <li><Link to="/services/pick-drop" className="hover:text-emerald-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded">Pick & Drop</Link></li> {/* Added focus styles */}
+              <li><Link to="/services/packaging" className="hover:text-emerald-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded">Packaging</Link></li>
+              <li><Link to="/services/international" className="hover:text-emerald-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded">International & Domestic Services</Link></li>
             </ul>
           </div>
 
@@ -91,8 +91,11 @@ const Footer = () => {
             {[Facebook, Twitter, Linkedin, Instagram].map((Icon, i) => (
               <a
                 key={i}
-                href="#"
-                className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-400 via-sky-500 to-purple-600 flex items-center justify-center hover:scale-110 transition-all"
+                href="#" // Replace with actual social media links
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Shopy Courier on ${Icon.displayName}`}
+                className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-400 via-sky-500 to-purple-600 flex items-center justify-center hover:scale-110 transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded-full" // Added focus styles
               >
                 <Icon className="w-5 h-5 text-white" />
               </a>
@@ -100,22 +103,9 @@ const Footer = () => {
           </div>
 
           <p className="text-slate-400 text-sm text-center">
-            © {new Date().getFullYear()} Shopy Courier. All rights reserved.
+            © {new Date().getFullYear()} Shopy Courier. Developed by First Track Solution Technologies, All rights reserved.
           </p>
         </div>
-
-        {/* Bottom Links
-        <div className="mt-6 text-center text-sm text-slate-300 flex flex-wrap justify-center gap-3">
-          <BottomLink to="/" label="Home" />
-          <span>|</span>
-          <BottomLink to="/contact" label="Contact Us" />
-          <span>|</span>
-          <BottomLink to="/about" label="About Us" />
-          <span>|</span>
-          <BottomLink to="/privacy & policy" label="Privacy & Policy" />
-          <span>|</span>
-          <BottomLink to="/terms" label="Terms of Use" />
-        </div> */}
       </div>
     </footer>
   );
@@ -125,17 +115,11 @@ const FooterLink = ({ to, label }) => (
   <li>
     <Link
       to={to}
-      className="text-slate-300 hover:text-emerald-400 transition-colors"
+      className="text-slate-300 text-sm hover:text-emerald-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded" // Added focus styles
     >
       {label}
     </Link>
   </li>
-);
-
-const BottomLink = ({ to, label }) => (
-  <Link to={to} className="hover:text-emerald-400 transition-colors">
-    {label}
-  </Link>
 );
 
 export default Footer;

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Quote, Plus, X } from "lucide-react";
 
@@ -39,7 +38,7 @@ const Testimonials = () => {
         quote: formData.quote,
         image:
           formData.image ||
-          "https://ui-avatars.com/api/?name=" + formData.name
+          "https://ui-avatars.com/api/?name=" + encodeURIComponent(formData.name) + "&background=random&color=fff" // UI/UX Flaw: Added random background and white text for better default avatar
       }
     ]);
 
@@ -50,14 +49,14 @@ const Testimonials = () => {
   return (
     <section className="py-20 bg-slate-50 relative">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center mb-16">
-          <h2 className="text-4xl font-bold text-slate-900">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 text-center md:text-left">
             What Our Clients Say
           </h2>
 
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-lg transition"
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-300" // Added focus styles
           >
             <Plus size={20} />
             Add Testimonial
@@ -68,11 +67,11 @@ const Testimonials = () => {
           {testimonials.map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition p-8"
+              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 p-8 border border-gray-100 hover:-translate-y-1" // Added subtle translateY hover
             >
-              <Quote className="w-12 h-12 text-emerald-500 mb-4" />
+              <Quote className="w-10 h-10 text-emerald-500 mb-4" />
 
-              <p className="text-lg text-slate-700 mb-6">
+              <p className="text-lg text-slate-700 mb-6 italic">
                 “{item.quote}”
               </p>
 
@@ -80,7 +79,7 @@ const Testimonials = () => {
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-sm"
                 />
                 <p className="font-bold text-slate-900 text-lg">
                   – {item.name}
@@ -93,11 +92,12 @@ const Testimonials = () => {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-full max-w-md p-6 relative">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in"> {/* Added animation */}
+          <div className="bg-white rounded-xl w-full max-w-md p-6 relative shadow-2xl">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-slate-800"
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 rounded-full p-1"
+              aria-label="Close testimonial modal" // Accessibility: Add aria-label
             >
               <X />
             </button>
@@ -110,37 +110,40 @@ const Testimonials = () => {
               <input
                 type="text"
                 placeholder="Your Name"
-                className="w-full border rounded-lg px-4 py-3"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
                 required
+                aria-label="Your Name" // Accessibility: Add aria-label
               />
 
               <textarea
                 placeholder="Your Feedback"
-                className="w-full border rounded-lg px-4 py-3 h-28 resize-none"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 h-28 resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" // Made resizable vertically
                 value={formData.quote}
                 onChange={(e) =>
                   setFormData({ ...formData, quote: e.target.value })
                 }
                 required
+                aria-label="Your Feedback" // Accessibility: Add aria-label
               />
 
               <input
                 type="url"
                 placeholder="Image URL (optional)"
-                className="w-full border rounded-lg px-4 py-3"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                 value={formData.image}
                 onChange={(e) =>
                   setFormData({ ...formData, image: e.target.value })
                 }
+                aria-label="Image URL (optional)" // Accessibility: Add aria-label
               />
 
               <button
                 type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-semibold"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-emerald-300" // Added focus styles
               >
                 Submit Testimonial
               </button>
@@ -148,6 +151,16 @@ const Testimonials = () => {
           </div>
         </div>
       )}
+      {/* Animation for modal */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+      `}</style>
     </section>
   );
 };

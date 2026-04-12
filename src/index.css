@@ -1,7 +1,9 @@
-/* @import "tailwindcss"; */
-
+/* src\index.css */
 
 @import "tailwindcss";
+
+/* Optionally, import a custom font here if you choose one */
+/* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); */
 
 /* ===============================
    Partner Logo Auto Scroll
@@ -18,4 +20,88 @@
 
 .animate-partner-scroll {
   animation: partner-scroll 25s linear infinite;
+}
+
+/* 
+   Global styling for focus states.
+   We use focus-visible to ensure outlines ONLY appear for keyboard users,
+   preventing the "rectangle" look when clicking with a mouse.
+*/
+*:focus-visible {
+  outline: 2px solid theme('colors.emerald.400');
+  outline-offset: 2px;
+}
+
+/* 
+   Hide default focus outlines for mouse users (most modern browsers do this, 
+   but this ensures consistency). 
+*/
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===============================
+   Navbar Link Underline Animation (New Addition)
+================================ */
+.nav-link-underline {
+  position: relative;
+  display: inline-block; /* Important for positioning pseudo-element relative to text */
+  padding-bottom: 5px; /* Space for the underline */
+  overflow: hidden; /* Ensures the line doesn't extend beyond bounds before expanding */
+}
+
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px; /* Thickness of the underline */
+  bottom: 0;
+  left: 0; /* Starts from the left */
+  background-color: theme('colors.emerald.300'); /* Your brand accent color */
+  transition: width 0.3s ease-out; /* Smooth expansion */
+}
+
+.nav-link-underline:hover::after,
+.nav-link-underline.active::after { /* Apply on hover and active state */
+  width: 100%; /* Expands to full width */
+}
+
+/* Additional animation for mobile menu */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out forwards;
+}
+
+/* ===============================
+   Custom Scrollbar Styling (Theme-Adaptive)
+================================ */
+/* Webkit Browsers (Chrome, Safari, Edge, Opera) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc; /* Subtle slate-50, blends better with white pages */
+}
+
+::-webkit-scrollbar-thumb {
+  /* Gradient matching the website's brand colors: Emerald -> Sky -> Purple */
+  background: linear-gradient(180deg, #10b981, #3b82f6, #8b5cf6); 
+  border-radius: 20px;
+  border: 2px solid #f8fafc; /* Padding around thumb for a floating effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  /* Darker variants of the theme colors on hover */
+  background: linear-gradient(180deg, #059669, #2563eb, #7c3aed);
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #10b981 #f8fafc; /* thumb color | track color */
 }

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Globe2, Building2, Ship, Package } from "lucide-react";
 
@@ -27,10 +26,10 @@ const Capabilities = () => {
   ];
 
   return (
-    <section className="pt-10 pb-16 bg-white">
+    <section className="pt-16 pb-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading */}
-        <h2 className="text-4xl font-bold text-center mb-12 text-slate-900">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-14 text-slate-900">
           Our Capabilities
         </h2>
 
@@ -42,20 +41,20 @@ const Capabilities = () => {
             return (
               <div
                 key={index}
-                className="group bg-white rounded-2xl shadow-lg p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                className="group bg-white rounded-2xl shadow-xl p-6 md:p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border border-gray-100" // Increased shadow and added border
               >
                 {/* Icon */}
-                <div className="w-20 h-20 mx-auto mb-6 bg-emerald-100 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-emerald-500">
-                  <Icon className="w-10 h-10 text-emerald-600 transition-all duration-300 group-hover:text-white group-hover:scale-110" />
+                <div className="w-16 h-16 mx-auto mb-6 bg-emerald-100 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-emerald-500 group-hover:shadow-lg">
+                  <Icon className="w-8 h-8 text-emerald-600 transition-all duration-300 group-hover:text-white group-hover:scale-110" />
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold mb-4 text-slate-900 group-hover:text-emerald-600 transition-colors">
+                <h3 className="text-xl font-bold mb-3 text-slate-900 group-hover:text-emerald-600 transition-colors">
                   {capability.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-slate-600 leading-relaxed text-sm md:text-base">
                   {capability.description}
                 </p>
               </div>

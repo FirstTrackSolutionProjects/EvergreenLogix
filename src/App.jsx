@@ -95,6 +95,7 @@ import Testimonials from "./components/Testimonials";
 import Partners from "./components/Partners";
 import CTA from "./components/CTA";
 import ScrollToTop from "./components/ScrollToTop";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 // Pages
 import Login from "./pages/Login";
@@ -128,25 +129,28 @@ function Home() {
 function App() {
   return (
     <>
-      <ScrollToTop />   {/* 👈 ADD THIS */}
+      <ScrollToTop />
       <Navbar />
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/tracking" element={<Tracking />} />
-        <Route path="/blogs" element={<Blogs />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-use" element={<TermsOfUse />} />
-        <Route path="/refund-cancellation" element={<RefundCancellation />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
+      <main className="pt-20 pb-16 md:pb-0"> {/* Added pb-16 for Mobile Bottom Nav space */}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/tracking" element={<Tracking />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/refund-cancellation" element={<RefundCancellation />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </main>
 
       <Footer />
+      <MobileBottomNav />
     </>
   );
 }
