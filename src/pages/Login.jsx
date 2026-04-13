@@ -14,12 +14,8 @@ const Login = () => {
           alt="Login"
           className="w-full h-full object-cover"
         />
-
-        {/* Optional overlay */}
-        <div className="absolute inset-0 bg-black/40"></div>
-
-        {/* Text on image (optional) */}
       </div>
+    
 
       {/* FORM SECTION */}
       <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-10 bg-gray-100">
