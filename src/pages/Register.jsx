@@ -62,7 +62,7 @@ const Register = () => {
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
+              placeholder="Create Password"
               className="w-full px-4 py-3 pr-12 rounded-lg bg-white/90 text-gray-900 placeholder-gray-600 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
 
@@ -91,6 +91,13 @@ const Register = () => {
               {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
+
+           { /*Business name*/ }
+            <input
+              type="text"
+              placeholder="Business Name"
+              className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-600 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            />
 
           {/* Button */}
           <button
