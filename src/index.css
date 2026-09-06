@@ -105,3 +105,64 @@
   scrollbar-width: thin;
   scrollbar-color: #10b981 #f8fafc; /* thumb color | track color */
 }
+
+/* Add these styles for better form animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+/* Better input focus styles */
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Custom checkbox styling */
+input[type="checkbox"] {
+  accent-color: #10b981;
+}
+
+/* Smooth transitions for pricing cards */
+.pricing-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Gradient border effect for recommended plan */
+.pricing-card-recommended {
+  position: relative;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6) border-box;
+  border: 2px solid transparent;
+}
+
+/* Input focus glow */
+.input-glow:focus {
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+/* Animated price tag */
+@keyframes pulse-price {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.price-animate {
+  animation: pulse-price 2s ease-in-out infinite;
+}
