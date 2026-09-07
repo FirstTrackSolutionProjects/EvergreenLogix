@@ -1,62 +1,81 @@
+// src/components/Capabilities.jsx
 import React from "react";
-import { Globe2, Building2, Ship, Package } from "lucide-react";
+import { Globe2, Building2, Ship, Package, Leaf, Shield } from "lucide-react";
 
 const Capabilities = () => {
   const capabilities = [
     {
       icon: Globe2,
-      title: "International Shipping",
-      description: "Seamless global delivery with real-time tracking.",
+      title: "Global Shipping",
+      description: "Seamless international delivery with real-time tracking and eco-friendly options.",
+      color: "from-blue-500 to-cyan-500",
     },
     {
       icon: Building2,
       title: "Smart Warehousing",
-      description: "Modern, secure, and temperature-controlled storage.",
+      description: "Modern, secure, and temperature-controlled storage with inventory management.",
+      color: "from-emerald-500 to-teal-500",
     },
     {
       icon: Ship,
       title: "Air & Sea Cargo",
-      description: "Flexible cargo transport via air and sea.",
+      description: "Flexible cargo transport via air and sea with carbon-offset options.",
+      color: "from-purple-500 to-pink-500",
     },
     {
       icon: Package,
-      title: "Supply Chain Management",
-      description: "End-to-end logistics planning and coordination.",
+      title: "Supply Chain",
+      description: "End-to-end logistics planning and coordination for optimal efficiency.",
+      color: "from-orange-500 to-amber-500",
+    },
+    {
+      icon: Leaf,
+      title: "Eco-Friendly",
+      description: "Sustainable shipping solutions with reduced carbon footprint.",
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      icon: Shield,
+      title: "Secure Handling",
+      description: "Advanced safety protocols and insurance for every shipment.",
+      color: "from-indigo-500 to-blue-500",
     },
   ];
 
   return (
-    <section className="pt-16 pb-20 bg-white">
+    <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Heading */}
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-14 text-slate-900">
-          Our Capabilities
-        </h2>
+        <div className="text-center mb-16">
+          <span className="inline-block px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-sm font-semibold mb-4">
+            Our Capabilities
+          </span>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+            Everything You Need for
+            <span className="gradient-text"> Smart Logistics</span>
+          </h2>
+          <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+            Comprehensive solutions designed to make your shipping experience seamless, sustainable, and efficient.
+          </p>
+        </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {capabilities.map((capability, index) => {
             const Icon = capability.icon;
-
             return (
               <div
                 key={index}
-                className="group bg-white rounded-2xl shadow-xl p-6 md:p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border border-gray-100" // Increased shadow and added border
+                className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:-translate-y-2"
               >
-                {/* Icon */}
-                <div className="w-16 h-16 mx-auto mb-6 bg-emerald-100 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-emerald-500 group-hover:shadow-lg">
-                  <Icon className="w-8 h-8 text-emerald-600 transition-all duration-300 group-hover:text-white group-hover:scale-110" />
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${capability.color} p-3 mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className="w-8 h-8 text-white" />
                 </div>
-
-                {/* Title */}
-                <h3 className="text-xl font-bold mb-3 text-slate-900 group-hover:text-emerald-600 transition-colors">
+                <h3 className="text-xl font-bold mb-3 text-gray-900 group-hover:text-emerald-600 transition-colors">
                   {capability.title}
                 </h3>
-
-                {/* Description */}
-                <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+                <p className="text-gray-600 leading-relaxed">
                   {capability.description}
                 </p>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-emerald-500/5 transition-all duration-500 pointer-events-none" />
               </div>
             );
           })}

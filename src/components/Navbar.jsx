@@ -1,5 +1,6 @@
+// src/components/Navbar.jsx
 import React, { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 
 const Navbar = () => {
@@ -15,53 +16,72 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "HOME", path: "/" },
-    { name: "TRACKING", path: "/tracking" },
-    { name: "BLOGS", path: "/blogs" },
-    { name: "PRICING", path: "/pricing" },
-    { name: "ABOUT", path: "/about" },
-    { name: "CONTACT", path: "/contact" },
-    { name: "LOGIN", path: "/login" }
+    { name: "Home", path: "/" },
+    { name: "Tracking", path: "/tracking" },
+    { name: "Blogs", path: "/blogs" },
+    { name: "Pricing", path: "/pricing" },
+    { name: "About", path: "/about" },
+    { name: "Contact", path: "/contact" },
+    { name: "Login", path: "/login" },
   ];
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300
-        ${
-          isScrolled
-            ? "bg-gradient-to-r from-emerald-500 via-sky-500 to-purple-600 shadow-lg backdrop-blur-md bg-opacity-90"
-            : "bg-gradient-to-r from-slate-800 via-slate-700 to-slate-900"
-        }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+        isScrolled
+          ? "bg-white/95 backdrop-blur-xl shadow-xl border-b border-gray-100"
+          : "bg-transparent"
+      }`}
     >
       <div className="w-full px-4 sm:px-6 lg:px-12">
-        
-        {/* HEIGHT REDUCED */}
-        <div className="flex h-16 items-center justify-between">
-
-          {/* LOGO */}
+        <div className="flex h-16 md:h-20 items-center justify-between">
+          {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-md"
+            className="flex items-center gap-3 group focus:outline-none"
           >
-            <img
-              src="/Logo.png"
-              alt="Shopy Courier Logo"
-              className="w-10 h-10 rounded-md group-hover:scale-105 transition-transform duration-200"
-            />
-            <span className="text-white font-semibold text-base tracking-wide group-hover:text-emerald-300 transition-colors duration-200">
-              Shopy Courier
-            </span>
+            <div className="relative">
+              <img
+                src="/Logo.png"
+                alt="Evergreen Logix"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-xl group-hover:rotate-[-5deg] transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-emerald-400/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+            </div>
+            <div>
+              <span
+                className={`font-bold text-lg md:text-xl tracking-tight transition-colors duration-300 ${
+                  isScrolled ? "text-gray-900" : "text-white"
+                }`}
+              >
+                Evergreen
+              </span>
+              <span
+                className={`font-bold text-lg md:text-xl tracking-tight transition-colors duration-300 ${
+                  isScrolled ? "text-emerald-600" : "text-emerald-300"
+                }`}
+              >
+                Logix
+              </span>
+            </div>
           </Link>
 
-          {/* DESKTOP MENU */}
-          <div className="hidden md:flex items-center gap-6">
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <NavLink
                 key={link.name}
                 to={link.path}
                 className={({ isActive }) =>
-                  `nav-link-underline text-white text-sm font-medium hover:text-emerald-300 transition-all duration-200 outline-none focus-visible:text-emerald-300
-                  ${isActive ? "active text-emerald-300" : ""}`
+                  `relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                    isScrolled
+                      ? isActive
+                        ? "text-emerald-600 bg-emerald-50"
+                        : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
+                      : isActive
+                      ? "text-white bg-white/20"
+                      : "text-white/90 hover:text-white hover:bg-white/10"
+                  }`
                 }
               >
                 {link.name}
@@ -69,46 +89,56 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* MOBILE BUTTON */}
-          {/* <button
+          {/* Mobile Menu Button */}
+          <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-white p-2 focus:outline-none focus:ring-2 focus:ring-white rounded-md"
+            className={`md:hidden p-2 rounded-lg transition-all duration-300 ${
+              isScrolled
+                ? "text-gray-700 hover:bg-gray-100"
+                : "text-white hover:bg-white/10"
+            }`}
             aria-label="Toggle Menu"
           >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button> */}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
 
-      {/* MOBILE MENU */}
-      {/* {isMobileMenuOpen && (
-        <div className="md:hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-t border-slate-700 pb-3 animate-fade-in-down">
-          <div className="px-4 py-3 space-y-2">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `block text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300
-                  hover:bg-slate-700 hover:text-emerald-300 active:bg-slate-600 active:scale-[0.98]
-                  ${isActive ? "bg-slate-700 text-emerald-300" : ""}`
-                }
-              >
-                {link.name}
-              </NavLink>
-            ))}
-
-            <Link
-              to="/login"
+      {/* Mobile Menu */}
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-500 ease-in-out ${
+          isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div
+          className={`${
+            isScrolled
+              ? "bg-white/95 backdrop-blur-xl border-b border-gray-100"
+              : "bg-gray-900/95 backdrop-blur-xl"
+          } px-4 py-3 space-y-1`}
+        >
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.name}
+              to={link.path}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block bg-gradient-to-r from-emerald-400 to-sky-500 text-center py-2 rounded-md font-semibold text-white hover:from-emerald-500 hover:to-sky-600 transition-all duration-200 shadow-md hover:shadow-lg mt-3 focus:outline-none focus:ring-4 focus:ring-emerald-300 active:scale-[0.98]"
+              className={({ isActive }) =>
+                `block px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  isScrolled
+                    ? isActive
+                      ? "text-emerald-600 bg-emerald-50"
+                      : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
+                    : isActive
+                    ? "text-white bg-white/20"
+                    : "text-white/90 hover:text-white hover:bg-white/10"
+                }`
+              }
             >
-              LOGIN
-            </Link>
-          </div>
+              {link.name}
+            </NavLink>
+          ))}
         </div>
-      )} */}
+      </div>
     </nav>
   );
 };

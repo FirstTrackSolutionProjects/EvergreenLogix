@@ -1,11 +1,9 @@
+/* src/App.css */
 * {
     scroll-behavior: smooth;
-    /* Added font-family for consistency, assuming a sans-serif font like Inter, Poppins, etc. */
-    /* You might want to import a specific font in index.css or define it in tailwind.config.js */
-    font-family: 'Inter', sans-serif; 
 }
 
 .App {
     min-height: 100vh;
-    background: white; /* This will be overridden by component backgrounds for most sections */
+    background: white;
 }
