@@ -3,8 +3,7 @@ import { MessageCircle } from "lucide-react";
 
 const CTA = () => {
   const handleClick = () => {
-    window.open(
-    );
+    window.location.href = "/contact";
   };
 
   return (
@@ -21,7 +20,7 @@ const CTA = () => {
 
         <button
           onClick={handleClick}
-          className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-300" // Added focus styles
+          className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-300"
         >
           <MessageCircle className="w-5 h-5" />
           Get in Touch

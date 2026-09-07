@@ -1,6 +1,6 @@
 // src/components/FloatingChatbot.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Minimize2, Maximize2, HelpCircle, Ticket, FileText, User, Mail } from "lucide-react";
+import { MessageCircle, X, Send, Minimize2, Maximize2, HelpCircle, Ticket, FileText, User, Mail, Zap } from "lucide-react";
 
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,7 +85,7 @@ const FloatingChatbot = () => {
     }
     
     if (lower.includes("contact") || lower.includes("support") || lower.includes("help") || lower.includes("assist")) {
-      return "📞 Our support team is available 24/7! You can:\n• Call us: +91 1234567890\n• Email: info@evergreenlogix.site\n• Use the contact form on our Contact page\n• Raise a ticket below!";
+      return "📞 Our support team is available 24/7! You can:\n• Call us: +91 1234567890\n• Email: info@evergreenlogix.com\n• Use the contact form on our Contact page\n• Raise a ticket below!";
     }
     
     if (lower.includes("refund") || lower.includes("cancel") || lower.includes("return")) {
@@ -236,6 +236,14 @@ const FloatingChatbot = () => {
                   </div>
                 )}
                 <div ref={messagesEndRef} />
+                
+                {/* Powered by */}
+                <div className="text-center py-2">
+                  <span className="text-[10px] text-gray-400 flex items-center justify-center gap-1">
+                    <Zap className="w-3 h-3 text-emerald-500" />
+                    Powered by <span className="font-semibold text-emerald-600">Evergreen Logix AI</span>
+                  </span>
+                </div>
               </div>
 
               {/* Quick Actions */}

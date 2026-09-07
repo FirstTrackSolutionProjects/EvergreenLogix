@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: "How do I contact customer support?",
-    a: "Our customer support team is available 24/7. You can reach us via phone at +91 1234567890, email at info@evergreenlogix.site, or through the contact form on our website.",
+    a: "Our customer support team is available 24/7. You can reach us via phone at +91 1234567890, email at info@evergreenlogix.com, or through the contact form on our website.",
   },
   {
     q: "What makes Evergreen Logix eco-friendly?",

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Check, Calculator, Package, MapPin, DollarSign, Truck, Send, Plus, X, Clock, Globe, Shield, Sparkles } from "lucide-react";
 
 // Helper Components
-const Field = ({ label, placeholder = "", type = "input", options = [], icon: Icon }) => (
+const Field = ({ label, placeholder = "", type = "input", options = [], icon: Icon, onChange }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
     <div className="relative">
@@ -15,6 +15,7 @@ const Field = ({ label, placeholder = "", type = "input", options = [], icon: Ic
         <select 
           className={`w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200 bg-white appearance-none ${Icon ? 'pl-10' : ''}`}
           aria-label={label}
+          onChange={onChange}
         >
           {options.map((opt, i) => (
             <option key={i} value={opt.toLowerCase()}>{opt}</option>
@@ -130,7 +131,7 @@ const Pricing = () => {
                       <Field 
                         label="Shipping Method" 
                         type="select" 
-                        options={["Surface", "Express", "Priority"]} 
+                        options={["Surface", "Express"]} 
                         icon={Truck}
                       />
                       <Field 
@@ -149,22 +150,32 @@ const Pricing = () => {
                         placeholder="Ex. 845401" 
                         icon={MapPin}
                       />
-                      <Field 
-                        label="COD Amount" 
-                        placeholder="0" 
-                        type="number" 
-                        icon={DollarSign}
-                      />
+                      <div id="cod-amount-field" style={{ display: 'none' }}>
+                        <Field 
+                          label="COD Amount" 
+                          placeholder="0" 
+                          type="number" 
+                          icon={DollarSign}
+                        />
+                      </div>
                       <Field 
                         label="Payment Mode" 
                         type="select" 
                         options={["Pre-paid", "COD", "Pickup"]} 
                         icon={DollarSign}
+                        onChange={(e) => {
+                          const codField = document.getElementById('cod-amount-field');
+                          if (e.target.value === 'cod') {
+                            codField.style.display = 'block';
+                          } else {
+                            codField.style.display = 'none';
+                          }
+                        }}
                       />
                       <Field 
                         label="Shipment Type" 
                         type="select" 
-                        options={["B2C", "B2B", "C2C"]} 
+                        options={["B2C", "B2B"]} 
                         icon={Package}
                       />
                       <Field 

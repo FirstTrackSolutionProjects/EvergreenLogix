@@ -54,7 +54,6 @@ const ShippingCalculator = () => {
                   <select className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200 bg-white appearance-none">
                     <option>Surface</option>
                     <option>Express</option>
-                    <option>Priority</option>
                   </select>
                 </div>
                 <div className="relative">
@@ -93,7 +92,7 @@ const ShippingCalculator = () => {
                     />
                   </div>
                 </div>
-                <div className="relative">
+                <div className="relative" id="cod-amount-container" style={{ display: 'none' }}>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     COD Amount
                   </label>
@@ -110,7 +109,17 @@ const ShippingCalculator = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Payment Mode
                   </label>
-                  <select className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200 bg-white appearance-none">
+                  <select 
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200 bg-white appearance-none"
+                    onChange={(e) => {
+                      const codContainer = document.getElementById('cod-amount-container');
+                      if (e.target.value === 'COD') {
+                        codContainer.style.display = 'block';
+                      } else {
+                        codContainer.style.display = 'none';
+                      }
+                    }}
+                  >
                     <option>Pre-paid</option>
                     <option>COD</option>
                     <option>Pickup</option>
@@ -123,7 +132,6 @@ const ShippingCalculator = () => {
                   <select className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200 bg-white appearance-none">
                     <option>B2C</option>
                     <option>B2B</option>
-                    <option>C2C</option>
                   </select>
                 </div>
                 <div className="relative">

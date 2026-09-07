@@ -2,14 +2,6 @@ import React from "react";
 
 const partners = [
   {
-    logo: "https://upload.wikimedia.org/wikipedia/commons/a/ac/DHL_Logo.svg",
-    name: "DHL"
-  },
-  {
-    logo: "https://upload.wikimedia.org/wikipedia/commons/9/9d/FedEx_Express.svg",
-    name: "FedEx"
-  },
-  {
     logo: "https://upload.wikimedia.org/wikipedia/commons/6/6c/Blue_Dart_Express_logo.svg",
     name: "Blue Dart"
   },
@@ -18,21 +10,28 @@ const partners = [
     name: "Delhivery"
   },
   {
-    logo: "https://upload.wikimedia.org/wikipedia/commons/6/6b/United_Parcel_Service_logo_2014.svg",
-    name: "UPS"
+    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Gati_Logo_SVG.svg/250px-Gati_Logo_SVG.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+    name: "Gati"
   },
   {
-    logo: "https://cdn.brandfetch.io/idmGNOSQ1E/w/425/h/86/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1772328409995",
-    name: "Envia"
-  },
-  // Add more partners to make the scroll loop smoother and longer
-  {
-    logo: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Aramex_logo.svg",
-    name: "Aramex"
+    logo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/59/Ekart_logo.svg/250px-Ekart_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+    name: "Ekart"
   },
   {
-    logo: "https://images.seeklogo.com/logo-png/30/1/india-post-logo-png_seeklogo-304806.png",
-    name: "India Post"
+    logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEmo7BT_b-Vp5WK49LVLZf112_TYXViKIpq57lxak0Pg&s=10",
+    name: "Xpressbees"
+  },
+  {
+    logo: "https://www.shadowfax.in/logo_header_tm.svg",
+    name: "Shadowfax"
+  },
+  {
+    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/DTDC_logo.png/250px-DTDC_logo.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+    name: "DTDC"
+  },
+  {
+    logo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/06/Amazon_2024.svg/250px-Amazon_2024.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+    name: "Amazon"
   },
 ];
 
@@ -45,7 +44,7 @@ const Partners = () => {
           Our Trusted Partners
         </h2>
 
-        <div className="overflow-hidden relative"> {/* Added relative for before/after gradients */}
+        <div className="overflow-hidden relative">
           {/* Fading gradients at edges */}
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
@@ -53,7 +52,7 @@ const Partners = () => {
           <div
             className="flex gap-12 w-max items-center animate-partner-scroll"
           >
-            {[...partners, ...partners, ...partners].map((item, index) => ( // Repeat partners more times for a longer, smoother loop
+            {[...partners, ...partners, ...partners].map((item, index) => (
               <div
                 key={index}
                 className="
@@ -64,9 +63,9 @@ const Partners = () => {
                   rounded-xl
                   shadow-sm
                   transition-all duration-300 hover:shadow-md
-                  p-4 // Added padding inside the card
+                  p-4
                 "
-                aria-label={`Partner logo: ${item.name}`} // Accessibility: Add aria-label
+                aria-label={`Partner logo: ${item.name}`}
               >
                 <img
                   src={item.logo}
