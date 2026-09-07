@@ -1,156 +1,151 @@
+// src/pages/RefundCancellation.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, RefreshCw, XCircle, Clock, AlertCircle, Shield, CheckCircle, Mail, DollarSign } from "lucide-react";
 
 const RefundCancellation = () => {
+  const sections = [
+    {
+      icon: XCircle,
+      title: "1. Cancellation of Shipments",
+      content: "Shipments can be canceled only before pickup is completed. Once the courier has picked up the package, cancellation requests will not be accepted.",
+      points: [
+        "Cancellation requests must be made through your account dashboard or by contacting customer support.",
+        "Any service or processing fees incurred before cancellation may be non-refundable.",
+      ],
+    },
+    {
+      icon: RefreshCw,
+      title: "2. Refund Eligibility",
+      content: "Refunds may be issued in the following cases:",
+      points: [
+        "The shipment is canceled before pickup.",
+        "A duplicate payment or incorrect charge occurs due to a system or technical error.",
+        "Evergreen Logix is unable to provide the service due to internal operational issues.",
+      ],
+    },
+    {
+      icon: AlertCircle,
+      title: "3. Non-Refundable Situations",
+      content: "Refunds will not be issued in the following situations:",
+      points: [
+        "The shipment has already been picked up or is in transit.",
+        "Delays caused by customs clearance, weather conditions, strikes, natural disasters, or third-party logistics partners.",
+        "Incorrect or incomplete shipment details provided by the user.",
+        "Shipments restricted, delayed, or confiscated by government or customs authorities.",
+      ],
+    },
+    {
+      icon: Clock,
+      title: "4. Refund Processing Time",
+      content: "Approved refunds will be processed within 7–10 business days and credited to the original payment method used at the time of booking. You will receive a confirmation email once the refund is processed.",
+    },
+    {
+      icon: Shield,
+      title: "5. Damaged or Lost Shipments",
+      content: "In the event of damage or loss, compensation may be considered based on the declared value of the shipment, supporting documents (such as invoices and photographs), and the outcome of investigations conducted by Evergreen Logix and its logistics partners. Compensation is subject to applicable policies and third-party carrier terms.",
+    },
+    {
+      icon: RefreshCw,
+      title: "6. Changes to This Policy",
+      content: "Evergreen Logix reserves the right to update or modify this Refund & Cancellation Policy at any time. Any changes will be effective immediately upon being posted on this page. We encourage you to review this policy periodically.",
+    },
+  ];
+
   return (
     <div className="bg-white min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-[250px] md:h-[300px] flex items-center justify-center bg-gradient-to-r from-slate-800 to-slate-900 mb-12">
-        <h1 className="text-white text-4xl md:text-5xl font-bold text-center drop-shadow-lg">
-          Refund & Cancellation Policy
-        </h1>
+      {/* Hero */}
+      <section className="relative bg-gradient-to-br from-emerald-600 to-emerald-800 py-24 text-center text-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <span className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-4 border border-white/20">
+            Policies
+          </span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg">
+            Refund & Cancellation Policy
+          </h1>
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+            Understand our policies for cancellations, refunds, and compensation.
+          </p>
+        </div>
       </section>
 
-      <div className="px-6 max-w-5xl mx-auto pb-20">
-        <p className="text-gray-700 leading-relaxed text-base md:text-lg mb-8 text-center">
-          At <strong>Shopy Courier</strong>, we aim to provide reliable and
-          efficient courier and logistics services. This Refund & Cancellation
-          Policy explains when cancellations, refunds, or compensation may be
-          applicable.
-        </p>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-6 py-16">
+        <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-8 md:p-12 border border-gray-100 shadow-sm">
+          <p className="text-gray-700 leading-relaxed text-lg mb-8 text-center border-b border-gray-200 pb-8">
+            At <strong>Evergreen Logix</strong>, we aim to provide reliable and
+            efficient courier and logistics services. This Refund & Cancellation
+            Policy explains when cancellations, refunds, or compensation may be
+            applicable.
+          </p>
 
-        <section className="space-y-8">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-slate-900">
-              1. Cancellation of Shipments
-            </h2>
-            <p className="text-gray-700 leading-relaxed text-base">
-              Shipments can be canceled <strong>only before pickup is completed</strong>.
-              Once the courier has picked up the package, cancellation requests
-              will not be accepted.
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 space-y-2 text-base">
-              <li>
-                Cancellation requests must be made through your account
-                dashboard or by contacting customer support.
-              </li>
-              <li>
-                Any service or processing fees incurred before cancellation may
-                be non-refundable.
-              </li>
-            </ul>
+          <div className="space-y-8">
+            {sections.map((section, index) => {
+              const Icon = section.icon;
+              return (
+                <div key={index} className="group">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:bg-emerald-500 transition-colors duration-300">
+                      <Icon className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors">
+                        {section.title}
+                      </h2>
+                      <p className="text-gray-700 leading-relaxed mb-3">
+                        {section.content}
+                      </p>
+                      {section.points && (
+                        <ul className="space-y-2 text-gray-700">
+                          {section.points.map((point, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-emerald-500 mt-1.5">•</span>
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-slate-900">
-              2. Refund Eligibility
-            </h2>
-            <ul className="list-disc pl-6 text-gray-700 space-y-2 text-base">
-              <li>The shipment is canceled before pickup.</li>
-              <li>
-                A duplicate payment or incorrect charge occurs due to a system
-                or technical error.
-              </li>
-              <li>
-                Shopy Courier is unable to provide the service due to internal
-                operational issues.
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-slate-900">
-              3. Non-Refundable Situations
-            </h2>
-            <ul className="list-disc pl-6 text-gray-700 space-y-2 text-base">
-              <li>The shipment has already been picked up or is in transit.</li>
-              <li>
-                Delays caused by customs clearance, weather conditions,
-                strikes, natural disasters, or third-party logistics partners.
-              </li>
-              <li>
-                Incorrect or incomplete shipment details provided by the user.
-              </li>
-              <li>
-                Shipments restricted, delayed, or confiscated by government or
-                customs authorities.
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-slate-900">
-              4. Refund Processing Time
-            </h2>
-            <p className="text-gray-700 leading-relaxed text-base">
-              Approved refunds will be processed within{" "}
-              <strong>7–10 business days</strong> and credited to the original
-              payment method used at the time of booking.
+          <div className="mt-10 pt-8 border-t border-gray-200 text-center">
+            <p className="text-sm text-gray-500">
+              Last updated: January 12, 2026
             </p>
           </div>
-
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-slate-900">
-              5. Damaged or Lost Shipments
-            </h2>
-            <p className="text-gray-700 leading-relaxed text-base">
-              In the event of damage or loss, compensation may be considered
-              based on the declared value of the shipment, supporting documents
-              (such as invoices and photographs), and the outcome of
-              investigations conducted by Shopy Courier and its logistics
-              partners. Compensation is subject to applicable policies and
-              third-party carrier terms.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-slate-900">
-              6. Changes to This Policy
-            </h2>
-            <p className="text-gray-700 leading-relaxed text-base">
-              Shopy Courier reserves the right to update or modify this Refund &
-              Cancellation Policy at any time. Any changes will be effective
-              immediately upon being posted on this page.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-slate-900">
-              7. Contact Information
-            </h2>
-            <p className="text-gray-700 leading-relaxed text-base">
-              For cancellation, refund, or compensation-related queries, please
-              contact us at{" "}
-              <a
-                href="mailto:support@shopycourier.site"
-                className="text-emerald-600 underline hover:text-emerald-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded" // Added focus styles
-              >
-                support@shopycourier.site
-              </a>
-            </p>
-          </div>
-        </section>
-
-        <p className="text-sm text-gray-500 mt-10 text-center">
-          Last updated: January 12, 2026
-        </p>
+        </div>
       </div>
 
-      {/* Generic CTA for policy pages */}
-      <section className="bg-gradient-to-br from-emerald-600 to-sky-700 text-white py-20 text-center px-4">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 drop-shadow-md">Need More Information?</h2>
-        <p className="max-w-2xl mx-auto mb-8 text-base md:text-lg opacity-90">
-          Our team is available to clarify any questions you may have about refunds.
-        </p>
-
-        <Link
-          to="/contact"
-          className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-300" // Added focus styles
-        >
-          <MessageCircle className="w-5 h-5" />
-          Contact Support
-        </Link>
+      {/* CTA */}
+      <section className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white py-20 text-center px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 drop-shadow-md">
+            Need Help With a Refund?
+          </h2>
+          <p className="max-w-2xl mx-auto mb-8 text-base md:text-lg text-white/90">
+            Contact our support team for assistance with refunds or cancellations.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/contact"
+              className="inline-flex items-center justify-center gap-2 bg-white text-emerald-700 px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Contact Support
+            </Link>
+            <Link
+              to="/faq"
+              className="inline-flex items-center justify-center gap-2 bg-emerald-500/20 backdrop-blur-sm text-white px-8 py-3 rounded-full font-semibold border border-white/30 hover:bg-white/20 transition-all duration-300"
+            >
+              <DollarSign className="w-5 h-5" />
+              View FAQ
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );
