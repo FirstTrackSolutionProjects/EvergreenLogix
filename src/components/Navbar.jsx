@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 import React, { useState, useEffect } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 
 const Navbar = () => {
@@ -30,7 +30,7 @@ const Navbar = () => {
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
         isScrolled
           ? "bg-white/95 backdrop-blur-xl shadow-xl border-b border-gray-100"
-          : "bg-transparent"
+          : "bg-gradient-to-r from-emerald-900/80 to-emerald-800/80 backdrop-blur-md border-b border-white/10"
       }`}
     >
       <div className="w-full px-4 sm:px-6 lg:px-12">
@@ -80,7 +80,7 @@ const Navbar = () => {
                         : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
                       : isActive
                       ? "text-white bg-white/20"
-                      : "text-white/90 hover:text-white hover:bg-white/10"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
                   }`
                 }
               >
@@ -114,7 +114,7 @@ const Navbar = () => {
           className={`${
             isScrolled
               ? "bg-white/95 backdrop-blur-xl border-b border-gray-100"
-              : "bg-gray-900/95 backdrop-blur-xl"
+              : "bg-emerald-900/95 backdrop-blur-xl border-b border-white/10"
           } px-4 py-3 space-y-1`}
         >
           {navLinks.map((link) => (
@@ -130,7 +130,7 @@ const Navbar = () => {
                       : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
                     : isActive
                     ? "text-white bg-white/20"
-                    : "text-white/90 hover:text-white hover:bg-white/10"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
                 }`
               }
             >

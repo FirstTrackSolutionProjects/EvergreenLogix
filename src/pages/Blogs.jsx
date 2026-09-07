@@ -1,86 +1,260 @@
-import React from "react";
-import { useNavigate, Link } from "react-router-dom"; // Import Link for blog posts
-import { MessageCircle } from "lucide-react"; // Import for CTA icon
+// src/pages/Blogs.jsx
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { MessageCircle, Calendar, User, ArrowRight, Tag, Search } from "lucide-react";
 
 const Blogs = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const blogPosts = [
     {
       id: 1,
       image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80",
-      title: "Good Establish with Shopy Courier",
+      title: "Good Establish with Evergreen Logix",
       description: "Learn how to reduce costs and improve delivery times. Discover the strategies for efficient logistics management.",
-      link: "/blogs/good-establish-with-shopy-courier" // Example unique link
+      date: "January 15, 2026",
+      author: "Tejash Parekh",
+      category: "Logistics",
+      readTime: "5 min read",
+      link: "/blogs/good-establish-with-evergreen-logix"
     },
     {
       id: 2,
       image: "https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&w=800&q=80",
-      title: "The Future of Logistics with AI and Shopy Courier",
-      description: "Discover how AI is changing logistics, optimizing routes, and enhancing operational efficiency with Shopy Courier.",
+      title: "The Future of Logistics with AI and Evergreen Logix",
+      description: "Discover how AI is changing logistics, optimizing routes, and enhancing operational efficiency with Evergreen Logix.",
+      date: "January 12, 2026",
+      author: "Tejash Parekh",
+      category: "Technology",
+      readTime: "7 min read",
       link: "/blogs/future-of-logistics-with-ai"
     },
     {
       id: 3,
-      image: "data:image/webp;base64,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", // Changed image for better diversity
+      image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80",
       title: "Sustainable Shipping: Our Green Initiatives",
-      description: "Explore Shopy Courier's efforts in promoting eco-friendly logistics solutions and reducing carbon footprint.",
+      description: "Explore Evergreen Logix's efforts in promoting eco-friendly logistics solutions and reducing carbon footprint.",
+      date: "January 10, 2026",
+      author: "Tejash Parekh",
+      category: "Sustainability",
+      readTime: "4 min read",
       link: "/blogs/sustainable-shipping"
     },
-    // Add more blog posts as needed
+    {
+      id: 4,
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
+      title: "How Technology is Revolutionizing Supply Chain",
+      description: "From blockchain to IoT, discover the technologies transforming the logistics industry.",
+      date: "January 8, 2026",
+      author: "Tejash Parekh",
+      category: "Technology",
+      readTime: "6 min read",
+      link: "/blogs/technology-revolutionizing-supply-chain"
+    },
+    {
+      id: 5,
+      image: "https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?auto=format&fit=crop&w=800&q=80",
+      title: "Tips for International Shipping Success",
+      description: "Essential tips and best practices for smooth international shipping and customs clearance.",
+      date: "January 5, 2026",
+      author: "Tejash Parekh",
+      category: "Shipping",
+      readTime: "8 min read",
+      link: "/blogs/international-shipping-tips"
+    },
+    {
+      id: 6,
+      image: "https://images.unsplash.com/photo-1494412519320-aa613dfb7738?auto=format&fit=crop&w=800&q=80",
+      title: "Building a Sustainable Supply Chain",
+      description: "Learn how businesses can build sustainable supply chains that benefit both the planet and profits.",
+      date: "January 3, 2026",
+      author: "Tejash Parekh",
+      category: "Sustainability",
+      readTime: "5 min read",
+      link: "/blogs/sustainable-supply-chain"
+    },
   ];
 
+  const categories = ["All", "Logistics", "Technology", "Sustainability", "Shipping"];
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  const filteredPosts = blogPosts.filter(post => {
+    const matchesCategory = activeCategory === "All" || post.category === activeCategory;
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          post.description.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* HERO */}
-      <section className="relative h-[300px] md:h-[400px] overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1920&q=80"
-          alt="Our Blogs"
-          className="w-full h-full object-cover object-center transform scale-105"
-        />
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-          <h1 className="text-white text-4xl md:text-5xl font-bold drop-shadow-lg">Our Blogs</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <section className="relative bg-gradient-to-br from-emerald-600 to-emerald-800 py-24 text-center text-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <span className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-4 border border-white/20">
+            Our Blog
+          </span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg">
+            Insights & Updates
+          </h1>
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+            Stay informed with the latest news, tips, and innovations in logistics.
+          </p>
         </div>
       </section>
 
-      {/* BLOG LIST */}
-      <section className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {blogPosts.map((post) => (
-          <div key={post.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-100 transform hover:-translate-y-1">
-            <img
-              src={post.image}
-              alt={post.title}
-              className="rounded-t-xl h-52 w-full object-cover"
-            />
-            <div className="p-6">
-              <h3 className="font-semibold text-xl mb-2 text-slate-900">
-                {post.title}
-              </h3>
-              <p className="text-base text-gray-600 mb-4">
-                {post.description}
-              </p>
-              <Link to={post.link} className="text-emerald-600 font-medium hover:underline flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-emerald-300 rounded"> {/* Wrapped in Link and added focus styles */}
-                Read More <span className="text-xl">→</span>
-              </Link>
+      {/* Search & Filter */}
+      <section className="py-8 bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            {/* Search */}
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search blogs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200"
+              />
+            </div>
+
+            {/* Categories */}
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    activeCategory === category
+                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
           </div>
-        ))}
+        </div>
       </section>
 
-      {/* CONNECT */}
-      <section className="bg-gradient-to-br from-emerald-500 to-sky-600 text-white py-20 text-center">
-        <h2 className="text-3xl md:text-4xl font-semibold mb-4 drop-shadow-md">Let’s Connect!</h2>
-        <p className="text-base md:text-lg mb-8 opacity-90">
-          We are always ready to assist you with your logistics needs.
-        </p>
-        <button
-          onClick={() => navigate("/contact")}
-          className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-gray-100 transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-300" // Added focus styles
-        >
-          <MessageCircle className="w-5 h-5" />
-          Get in Touch
-        </button>
+      {/* Blog Grid */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4">
+          {filteredPosts.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">📚</div>
+              <h3 className="text-2xl font-semibold text-gray-900">No posts found</h3>
+              <p className="text-gray-500 mt-2">Try adjusting your search or filter</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
+                >
+                  {/* Image */}
+                  <div className="relative h-56 overflow-hidden">
+                    <img
+                      src={post.image}
+                      alt={post.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-semibold rounded-full shadow-lg">
+                        {post.category}
+                      </span>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6">
+                    {/* Meta */}
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{post.date}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        <span>{post.author}</span>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-bold mb-2 text-gray-900 group-hover:text-emerald-600 transition-colors duration-300 line-clamp-2">
+                      {post.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {post.description}
+                    </p>
+
+                    {/* Read Time & Link */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-400">{post.readTime}</span>
+                      <Link
+                        to={post.link}
+                        className="inline-flex items-center gap-1 text-emerald-600 font-medium hover:text-emerald-700 transition-colors group-hover:gap-2"
+                      >
+                        Read More
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <span className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">
+            Subscribe
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Never Miss an Update
+          </h2>
+          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+            Subscribe to our newsletter and get the latest logistics insights delivered to your inbox.
+          </p>
+          <form className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200"
+            />
+            <button className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200 hover:scale-[1.02]">
+              Subscribe
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white py-20 text-center">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 drop-shadow-md">
+            Have Questions About Logistics?
+          </h2>
+          <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            Our team is here to help you with all your shipping and logistics needs.
+          </p>
+          <button
+            onClick={() => navigate("/contact")}
+            className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Contact Us
+          </button>
+        </div>
       </section>
     </div>
   );

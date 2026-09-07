@@ -1,163 +1,166 @@
+// src/pages/About.jsx
 import React from "react";
-import { MessageCircle } from "lucide-react"; // Import for CTA icon
-import { Link } from "react-router-dom"; // Import Link
+import { MessageCircle, Leaf, Globe, Users, Award, Clock, Shield, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const About = () => {
+  const stats = [
+    { icon: Users, value: "500+", label: "Clients Served" },
+    { icon: Globe, value: "50+", label: "Countries" },
+    { icon: Award, value: "99.9%", label: "Success Rate" },
+    { icon: Clock, value: "24/7", label: "Support" },
+  ];
+
+  const services = [
+    { icon: Globe, title: "International Shipping", desc: "Seamless global delivery with real-time tracking" },
+    { icon: Shield, title: "Smart Warehousing", desc: "Modern, secure, temperature-controlled storage" },
+    { icon: Leaf, title: "Eco-Friendly", desc: "Sustainable shipping with carbon offset" },
+    { icon: Sparkles, title: "Supply Chain", desc: "End-to-end logistics planning and coordination" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* HERO */}
-      <section className="relative h-[300px] md:h-[420px] overflow-hidden">
+    <div className="min-h-screen">
+      {/* Hero */}
+      <section className="relative h-[300px] md:h-[400px] overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1509395176047-4a66953fd231?auto=format&fit=crop&w=1920&q=80"
-          alt="About Us - Shopy Courier"
-          className="w-full h-full object-cover object-center transform scale-105"
+          alt="About Us - Evergreen Logix"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-          <h1 className="text-white text-4xl md:text-5xl font-bold drop-shadow-lg">
-            About Us
-          </h1>
-        </div>
-      </section>
-
-      {/* INTRO */}
-      <section className="max-w-7xl mx-auto px-6 py-16 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-8">Who We Are</h2>
-        <p className="text-gray-700 leading-relaxed text-lg max-w-4xl mx-auto">
-          <strong>Shopy Courier</strong>, a proud venture of{" "}
-          <strong>Shopy Courier</strong>, is a
-          dedicated logistics platform delivering speed, safety, and
-          operational excellence across the supply chain. Established in
-          ABC, Odisha in <strong>January 7</strong>, we focus on
-          next-generation tracking and reliable transport solutions. Our commitment is to
-          provide seamless global and local shipping experiences for businesses and individuals alike.
-        </p>
-      </section>
-
-      {/* MISSION / VISION / VALUES */}
-      <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
-        {[
-          {
-            title: "Our Mission",
-            desc: "To deliver the best logistics solutions with unmatched customer service.",
-          },
-          {
-            title: "Our Vision",
-            desc: "Connecting the world through fast, reliable, and efficient shipping.",
-          },
-          {
-            title: "Our Values",
-            desc: "Integrity, innovation, and customer-first approach in every delivery.",
-          },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-xl shadow-lg hover:shadow-xl transition p-8 text-center border border-gray-100 transform hover:-translate-y-1 duration-200"
-          >
-            <h3 className="font-semibold text-xl mb-3 text-slate-900">{item.title}</h3>
-            <p className="text-gray-600 text-base">{item.desc}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* OUR SERVICES */}
-        <section className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3 text-slate-900">
-            Our Services
-            </h2>
-            <p className="text-center text-gray-600 text-lg mb-14">
-            Offering a wide range of logistics solutions tailored to your needs.
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/80 to-emerald-800/60 flex items-center justify-center">
+          <div className="text-center px-4">
+            <span className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-4 border border-white/20">
+              About Us
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
+              Leading the Future of Logistics
+            </h1>
+            <p className="text-white/80 text-lg mt-4 max-w-2xl mx-auto">
+              Sustainable, reliable, and innovative shipping solutions for a connected world.
             </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-                {
-                icon: "🌍",
-                title: "International Shipping",
-                desc: "Time to time work. Seamless global delivery with real-time tracking.",
-                },
-                {
-                icon: "🏢",
-                title: "Smart Warehousing",
-                desc: "Modern, secure, and temperature-controlled storage solutions designed for efficiency and safety.",
-                },
-                {
-                icon: "🚢",
-                title: "Air & Sea Cargo",
-                desc: "Flexible cargo transport options via air and sea ensuring speed, safety, and cost-effectiveness.",
-                },
-                {
-                icon: "📦",
-                title: "Supply Chain Management",
-                desc: "End-to-end logistics planning and freight coordination to optimize routes and reduce delivery time.",
-                },
-            ].map((item, i) => (
-                <div
-                key={i}
-                className="bg-gray-50 p-8 rounded-xl shadow hover:shadow-lg transition-all duration-200 text-center border border-gray-100 transform hover:-translate-y-1"
-                aria-label={`Service: ${item.title}`} // Accessibility: Add aria-label
-                >
-                <div className="text-4xl mb-4">{item.icon}</div>
-                <h3 className="font-semibold text-lg mb-3 text-slate-900">{item.title}</h3>
-                <p className="text-gray-600 text-sm">{item.desc}</p>
-                </div>
-            ))}
-            </div>
+          </div>
         </div>
-        </section>
+      </section>
 
-        {/* MEET OUR TEAM */}
-        <section className="bg-gray-50 py-20">
+      {/* Intro */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-14 text-slate-900">
-            Meet Our Team
-            </h2>
-
-            <div className="flex justify-center">
-            <div className="bg-white p-8 rounded-xl shadow-lg text-center w-72 border border-gray-100 transform hover:scale-105 transition-all duration-200">
-                <img
-                src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-                alt="Tejash Parekh - CEO & Founder"
-                className="w-28 h-28 mx-auto rounded-full mb-4 object-cover object-center shadow-md"
-                />
-                <h3 className="font-semibold text-xl text-slate-900">Tejash Parekh</h3>
-                <p className="text-emerald-600 text-sm">CEO & Founder</p>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">
+                Who We Are
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                Your Trusted Logistics Partner
+              </h2>
+              <p className="text-gray-600 leading-relaxed text-lg mb-4">
+                <strong>Evergreen Logix</strong> is a dedicated logistics platform delivering speed, 
+                safety, and operational excellence across the supply chain. Established in 
+                Odisha, we focus on next-generation tracking and reliable transport solutions.
+              </p>
+              <p className="text-gray-600 leading-relaxed">
+                Our commitment is to provide seamless global and local shipping experiences 
+                for businesses and individuals alike, with a strong emphasis on sustainability 
+                and innovation.
+              </p>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              {stats.map((stat, i) => (
+                <div key={i} className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-xl text-center border border-gray-100 shadow-sm">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <stat.icon className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                  <div className="text-sm text-gray-500">{stat.label}</div>
+                </div>
+              ))}
             </div>
+          </div>
         </div>
-        </section>
+      </section>
 
+      {/* Mission Vision Values */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">
+              Our Core
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Mission, Vision & Values
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Our Mission",
+                desc: "To deliver the best logistics solutions with unmatched customer service and sustainable practices.",
+                icon: Leaf,
+              },
+              {
+                title: "Our Vision",
+                desc: "Connecting the world through fast, reliable, and efficient shipping for a greener future.",
+                icon: Globe,
+              },
+              {
+                title: "Our Values",
+                desc: "Integrity, innovation, sustainability, and customer-first approach in every delivery.",
+                icon: Users,
+              },
+            ].map((item, i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 text-center border border-gray-100 hover:-translate-y-2">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <item.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-xl mb-3 text-gray-900">{item.title}</h3>
+                <p className="text-gray-600 text-base">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      {/* WHY CHOOSE US - (Re-using component if possible, or simplifying) */}
-      <section className="bg-white py-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-slate-900">
-          Why Choose Us
-        </h2>
-
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-          {[
-            "Trusted Reliability",
-            "Secure Handling",
-            "On-Time Every Time",
-            "24/7 Assistance",
-          ].map((title, i) => (
-            <div key={i} className="bg-gray-50 p-6 rounded-xl shadow hover:shadow-md transition-all duration-200 text-center border border-gray-100 transform hover:-translate-y-1">
-              <h4 className="font-semibold text-slate-900 text-lg">{title}</h4>
-            </div>
-          ))}
+      {/* Services */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">
+              What We Offer
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Our Services
+            </h2>
+            <p className="text-gray-600 mt-2">Comprehensive logistics solutions tailored to your needs.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((service, i) => (
+              <div key={i} className="group bg-gray-50 p-6 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 text-center border border-gray-100 hover:-translate-y-2 hover:border-emerald-200">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-500 transition-colors duration-300">
+                  <service.icon className="w-7 h-7 text-emerald-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2 text-gray-900">{service.title}</h3>
+                <p className="text-gray-600 text-sm">{service.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-br from-emerald-500 to-sky-600 text-white py-20 text-center">
-        <h2 className="text-3xl md:text-4xl font-semibold mb-4 drop-shadow-md">Let’s Connect!</h2>
-        <p className="text-base md:text-lg mb-8 opacity-90">
-          We are always ready to assist you with your logistics needs.
-        </p>
-        <Link to="/contact" className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-gray-100 transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-300"> {/* Wrapped in Link and added focus styles */}
-          <MessageCircle className="w-5 h-5" />
-          Get in Touch
-        </Link>
+      <section className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white py-20 text-center">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Let's Connect!</h2>
+          <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            We are always ready to assist you with your logistics needs.
+          </p>
+          <Link
+            to="/contact"
+            className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Get in Touch
+          </Link>
+        </div>
       </section>
     </div>
   );
