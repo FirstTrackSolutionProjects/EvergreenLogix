@@ -100,7 +100,8 @@ const Contact = () => {
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-white/80 flex-shrink-0 mt-0.5" />
-                    <span>1st Floor, Room No 1/1, M S House Road, Shivaji Nagar, Landmark: Near Saraswati School, Rabodi 2, Thane, Mumbai, Maharashtra - 400601</span>
+                    <span>Office No. 110, Bharat Chambars,
+Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-white/80" />

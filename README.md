@@ -289,7 +289,8 @@ This project is proprietary and confidential. Unauthorized copying, distribution
 - **Website**: [shopycourier.site](https://shopycourier.site)
 - **Email**: info@shopycourier.site
 - **Phone**: +91 1234567890
-- **Address**: 1st Floor, Room No 1/1, M S House Road, Shivaji Nagar, Landmark: Near Saraswati School, Rabodi 2, Thane, Mumbai, Maharashtra - 400601
+- **Address**: Office No. 110, Bharat Chambars,
+Baroda Street Back Side Masjid Bundar East, Mumbai- 400009
 
 ---
 
