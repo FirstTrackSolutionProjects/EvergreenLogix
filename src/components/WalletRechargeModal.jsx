@@ -145,9 +145,9 @@ const WalletRechargeModal = ({onClose}) => {
           key: import.meta.env.VITE_APP_RAZORPAY_API_ID, // Replace with your Razorpay key ID
           amount: amount*100, // Amount is in paise (50000 paise = INR 500)
           currency: 'INR',
-          name: 'First Track',
+          name: 'Evergreen Logix',
           description: 'Wallet Recharge',
-          image: 'images/logo3.jpg',
+          image: '/Logo.png',
           order_id: data.id,
           handler: async function (response) {
             const verifyResponse = await fetch(`${API_URL}/wallet/verify/recharge`, {
