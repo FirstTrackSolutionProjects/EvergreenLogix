@@ -1,0 +1,2681 @@
+import cloneOrderService from "../services/orderServices/cloneOrderService";
+import React, { useEffect, useState } from "react";
+import { useSearchParams, useLocation } from 'react-router-dom';
+import { toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Checkbox,
+  FormControlLabel,
+  Box,
+  Paper,
+  IconButton,
+  Typography,
+  Divider,
+  Chip,
+  Tooltip,
+  CircularProgress,
+} from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import CloseIcon from '@mui/icons-material/Close';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import TrackingShareDialog from './TrackingShareDialog';
+import convertToUTCISOString from "../helpers/convertToUTCISOString";
+import { DOMESTIC_ORDER_STATUS_ENUMS, WALLET_TYPES } from "@/Constants";
+import WarehouseSelect from "./UiComponents/WarehouseSelect";
+import getB2CBulkShipmentPriceService from "@/services/bulkServices/get_batch_price.bulk.service";
+import getB2CBulkShipmentPriceStatusService from "@/services/bulkServices/get_batch_price_status.bulk.service";
+import shipB2CBulkShipmentService from "@/services/bulkServices/ship_batch.bulk.service";
+import getShipB2CBulkShipmentStatusService from "@/services/bulkServices/get_ship_batch_status.bulk.service";
+import { PDFDocument } from "pdf-lib";
+
+const API_URL = import.meta.env.VITE_APP_API_URL
+
+const getTodaysDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const getCurrentTime = () => {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0'); // Hours in 24-hour format
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+
+const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) => {
+  if (!isManage) return null;
+
+  const [boxes, setBoxes] = useState([
+    { box_no: 1, length: 0, breadth: 0, height: 0, weight: 0, weight_unit: 'kg', quantity: 1 }
+  ]);
+  const [orders, setOrders] = useState([
+    { box_no: 1, product_name: '', product_quantity: 0, selling_price: 0, tax_in_percentage: '' }
+  ]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/order/domestic`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token'),
+      },
+      body: JSON.stringify({ order: shipment.ord_id }),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          setOrders(result.order)
+        } else {
+          alert('failed: ' + result.message)
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during fetching Order');
+      });
+    fetch(`${API_URL}/order/domestic/boxes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token'),
+      },
+      body: JSON.stringify({ order: shipment.ord_id }),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          setBoxes(result.order)
+        } else {
+          alert('failed: ' + result.message)
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during fetching Boxes');
+      });
+  }, [])
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      orders: orders
+    }))
+  }, [orders]);
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      boxes: boxes
+    }))
+  }, [boxes]);
+
+  const [formData, setFormData] = useState({
+    wid: shipment.wid,
+    order: shipment.ord_id,
+    payMode: shipment.pay_method,
+    name: shipment.customer_name,
+    email: shipment.customer_email,
+    phone: shipment.customer_mobile,
+    address: shipment.shipping_address,
+    addressType: shipment.shipping_address_type,
+    postcode: shipment.shipping_postcode,
+    city: shipment.shipping_city,
+    state: shipment.shipping_state,
+    country: shipment.shipping_country,
+    Baddress: shipment.billing_address,
+    BaddressType: shipment.billing_address_type,
+    Bpostcode: shipment.billing_postcode,
+    Bcity: shipment.billing_city,
+    Bstate: shipment.billing_state,
+    Bcountry: shipment.billing_country,
+    same: 1,
+    boxes: boxes,
+    orders: orders,
+    discount: shipment.total_discount,
+    cod: shipment.cod_amount,
+    gst: shipment.gst,
+    Cgst: shipment.customer_gst,
+    shippingType: shipment.shipping_mode,
+    pickupDate: shipment.pickup_date,
+    pickupTime: shipment.pickup_time,
+    shipmentValue: shipment.shipment_value,
+    insurance: shipment.insurance || false,
+    ewaybill: shipment.ewaybill,
+    invoiceNumber: shipment.invoice_number,
+    invoiceDate: shipment.invoice_date,
+    invoiceAmount: shipment.invoice_amount,
+    invoiceUrl: shipment.invoice_url,
+    isB2B: shipment.is_b2b,
+    customer_reference_number: shipment?.customer_reference_number
+  })
+
+  useEffect(() => {
+    const pinToAdd = async () => {
+      try {
+        await fetch(`https://api.postalpincode.in/pincode/${formData.postcode}`)
+          .then(response => response.json())
+          .then(result => {
+            const city = result[0].PostOffice[0].District
+            const state = result[0].PostOffice[0].State
+            setFormData((prev) => ({
+              ...prev,
+              city: city,
+              state: state
+            }))
+          })
+      } catch (e) {
+        setFormData((prev) => ({
+          ...prev,
+          city: '',
+          state: ''
+        }))
+      }
+    }
+    if (formData.postcode.length == 6) pinToAdd()
+  }, [formData.postcode])
+
+  useEffect(() => {
+    const pinToAdd = async () => {
+      try {
+        await fetch(`https://api.postalpincode.in/pincode/${formData.Bpostcode}`)
+          .then(response => response.json())
+          .then(result => {
+            const city = result[0].PostOffice[0].District
+            const state = result[0].PostOffice[0].State
+            setFormData((prev) => ({
+              ...prev,
+              Bcity: city,
+              Bstate: state
+            }))
+          })
+      } catch (e) {
+        setFormData((prev) => ({
+          ...prev,
+          Bcity: '',
+          Bstate: ''
+        }))
+      }
+    }
+    if (formData?.Bpostcode?.length == 6) pinToAdd()
+  }, [formData?.Bpostcode])
+
+  // Auto-calculate shipment value from items
+  useEffect(() => {
+    const total = orders.reduce((sum, item) => {
+      const price = parseFloat(item.selling_price) || 0;
+      const qty = parseInt(item.product_quantity) || 0;
+      return sum + price * qty;
+    }, 0);
+    setFormData(prev => ({ ...prev, shipmentValue: total }));
+  }, [orders]);
+
+  const addProduct = (boxNumber = 1) => {
+    setOrders([...orders, { box_no: boxNumber, product_name: '', product_quantity: 1, selling_price: 0, tax_in_percentage: '' }]);
+  };
+
+  const addBox = () => {
+    setBoxes([...boxes, { box_no: boxes.length + 1, length: 10, breadth: 10, height: 10, weight: 1, weight_unit: 'kg', quantity: 1 }]);
+  };
+
+  const removeProduct = (index) => {
+    const updatedOrders = orders.filter((_, i) => i !== index);
+    setOrders(updatedOrders);
+    setFormData((prev) => ({
+      ...prev,
+      orders: orders
+    }))
+  };
+
+  const removeBox = (index) => {
+    const boxNumber = index + 1;
+    const updatedBoxes = boxes.filter((_, i) => i !== index);
+    const updatedOrders = orders.filter(o => parseInt(o.box_no) !== boxNumber);
+    setBoxes(updatedBoxes);
+    setOrders(updatedOrders);
+  };
+
+  const handleOrders = (index, event) => {
+    if (isShipped)
+      return;
+    const { name, value } = event.target;
+    const updatedOrders = [...orders];
+    updatedOrders[index][name] = value;
+    setOrders(updatedOrders);
+    setFormData((prev) => ({
+      ...prev,
+      orders: orders
+    }))
+  };
+
+  const handleBoxes = (index, event) => {
+    if (isShipped)
+      return;
+    const { name, value } = event.target;
+    const updatedBoxes = [...boxes];
+    updatedBoxes[index][name] = value;
+    setBoxes(updatedBoxes);
+    setFormData((prev) => ({
+      ...prev,
+      boxes: boxes
+    }))
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const [invoice, setInvoice] = useState(null)
+  const handleInvoice = (e) => {
+    const { files } = e.target;
+    setInvoice(files[0])
+  }
+
+  const uploadInvoice = async () => {
+    if (!invoice) {
+      return;
+    }
+    const invoiceUuid = uuidv4();
+    const key = `invoice/${invoiceUuid}`;
+    const filetype = invoice.type;
+
+    const putUrlReq = await fetch(`${API_URL}/s3/putUrl`, {
+      method: "POST",
+      headers: {
+        'Authorization': localStorage.getItem("token"),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ filename: key, filetype: filetype, isPublic: true }),
+    }).catch(err => { console.error(err); alert("err"); return });
+    const putUrlRes = await putUrlReq.json();
+
+    const uploadURL = putUrlRes.uploadURL;
+    await fetch(uploadURL, {
+      method: "PUT",
+      headers: {
+        'Content-Type': filetype
+      },
+      body: invoice,
+    }).then(response => {
+      if (response.status == 200) {
+        setFormData((prev) => ({
+          ...prev,
+          invoiceUrl: key
+        }))
+        alert("Invoice uploaded successfully!");
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          invoiceUrl: null
+        }))
+        alert("Failed to upload invoice!");
+      }
+    })
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log(formData)
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST offset in milliseconds
+    const istDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60 * 1000) + istOffset);
+
+    // COD validation
+    if (formData.payMode === 'COD' && (!formData.cod || parseFloat(formData.cod) <= 0)) {
+      toast.error('COD amount must be greater than 0 for COD orders');
+      return;
+    }
+    if (formData.payMode === 'Pre-paid' && parseFloat(formData.cod) > 0) {
+      toast.error('COD amount must be 0 for Prepaid orders');
+      return;
+    }
+
+    // Combine shipment pickup date and time into a single Date object
+    const pickupDateAndTime = new Date(`${formData.pickupDate}T${formData.pickupTime}`);
+
+    // Compare pickup time with the current IST time
+    if (pickupDateAndTime < istDate) {
+      toast.error('Pickup time is already passed. Please update and try again');
+      return;
+    }
+    let boxFlag = 0
+    for (let i = 0; i < formData.boxes.length; i++) {
+      for (let j = 0; j < formData.orders.length; j++) {
+        if (parseInt(formData.orders[j].box_no) == i + 1) {
+          boxFlag = 1
+        }
+      }
+      if (boxFlag == 0) {
+        toast.error('Please make sure every box has some items');
+        return
+      }
+      boxFlag = 0
+    }
+
+    let itemFlag = 0
+    for (let i = 0; i < formData.orders.length; i++) {
+      for (let j = 0; j < formData.boxes.length; j++) {
+        if (formData.orders[i].box_no == formData.boxes[j].box_no) {
+          itemFlag = 1
+        }
+      }
+      if (itemFlag == 0) {
+        toast.error('Some items have invalid box no.');
+        return
+      }
+      itemFlag = 0
+    }
+
+    fetch(`${API_URL}/order/domestic/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token'),
+      },
+      body: JSON.stringify(formData),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          toast.success('Order updated successfully');
+          setIsManage(false);
+          fetchData();
+        } else {
+          toast.error('Order failed: ' + result.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        toast.error('An error occurred during Order');
+      });
+  }
+
+  return (
+    <Dialog
+      open={isManage}
+      onClose={() => setIsManage(false)}
+      maxWidth="lg"
+      fullWidth
+    >
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <div>MANAGE SHIPMENT</div>
+          <IconButton onClick={() => setIsManage(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+            <FormControl fullWidth sx={{ minWidth: 300 }}>
+              <WarehouseSelect
+                value={formData.wid}
+                onChange={(wid) => setFormData(prev => ({ ...prev, wid }))}
+              />
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Pickup Date *"
+                type="date"
+                name="pickupDate"
+                size="small"
+                value={formData.pickupDate}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: getTodaysDate() }}
+              />
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Pickup Time *"
+                type="time"
+                name="pickupTime"
+                size="small"
+                value={formData.pickupTime}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Order Id"
+                name="order"
+                size="small"
+                placeholder="Ex. ORDER123456"
+                value={formData.order}
+                disabled
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Customer Reference Number"
+                name="customer_reference_number"
+                size="small"
+                placeholder="Ex. REF123456"
+                value={formData.customer_reference_number}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <InputLabel>Payment Method *</InputLabel>
+              <Select
+                value={formData.payMode}
+                onChange={handleChange}
+                name="payMode"
+                size="small"
+                label="Payment Method"
+              >
+                <MenuItem value="COD">COD</MenuItem>
+                <MenuItem value="Pre-paid">Prepaid</MenuItem>
+                {/* <MenuItem value="topay">To Pay</MenuItem> */}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="COD Amount"
+                name="cod"
+                size="small"
+                value={formData.cod}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <InputLabel>Shipping Type *</InputLabel>
+              <Select
+                value={formData.shippingType}
+                onChange={handleChange}
+                name="shippingType"
+                size="small"
+                label="Shipping Type"
+              >
+                <MenuItem value="Surface">Surface</MenuItem>
+                <MenuItem value="Express">Express</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Shipment Value"
+                name="shipmentValue"
+                size="small"
+                type="number"
+                value={formData.shipmentValue}
+                disabled
+                helperText="Auto-calculated from item prices × quantities"
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Buyer's Name *"
+                name="name"
+                size="small"
+                placeholder="Ex. Aditya Kumar"
+                value={formData.name}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 2 }}>
+              <TextField
+                label="Buyer's email"
+                name="email"
+                placeholder="Ex. customer@example.com"
+                size="small"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Buyer's Phone *"
+                name="phone"
+                size="small"
+                placeholder="Ex. 1234554321"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 3 }}>
+              <TextField
+                label="Shipping Address *"
+                name="address"
+                size="small"
+                placeholder="Ex. House no. 105, Kankarbagh, Patna, Bihar"
+                value={formData.address}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <InputLabel>Shipping Address Type *</InputLabel>
+              <Select
+                value={formData.addressType}
+                onChange={handleChange}
+                name="addressType"
+                size="small"
+                label="Shipping Address Type"
+              >
+                <MenuItem value="home">Home</MenuItem>
+                <MenuItem value="office">Office</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Shipping Pincode *"
+                name="postcode"
+                size="small"
+                placeholder="Ex. 813210"
+                value={formData.postcode}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Shipping City *"
+                name="city"
+                size="small"
+                placeholder="Ex. Bhagalpur"
+                value={formData.city}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Shipping State *"
+                name="state"
+                size="small"
+                placeholder="Ex. Bihar"
+                value={formData.state}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Shipping Country"
+                name="country"
+                size="small"
+                placeholder="Ex. India"
+                disabled
+                value={formData.country}
+                onChange={handleChange}
+              />
+            </FormControl>
+            {/* <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.same}
+                  onChange={handleChange}
+                  name="same"
+                />
+              }
+              label="Billing address is same as Shipping address"
+            /> */}
+          </Box>
+          <Box sx={{ display: formData.same ? 'none' : 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+            <FormControl fullWidth sx={{ minWidth: 300 }}>
+              <TextField
+                label="Billing Address"
+                name="Baddress"
+                size="small"
+                placeholder="Ex. House no. 105, Kankarbagh, Patna, Bihar"
+                value={formData.Baddress}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <InputLabel>Billing Address Type</InputLabel>
+              <Select
+                value={formData.BaddressType}
+                onChange={handleChange}
+                name="BaddressType"
+                size="small"
+                label="Billing Address Type"
+              >
+                <MenuItem value="home">Home</MenuItem>
+                <MenuItem value="office">Office</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Billing Pincode"
+                name="Bpostcode"
+                size="small"
+                placeholder="Ex. 813210"
+                value={formData.Bpostcode}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Billing City"
+                name="Bcity"
+                size="small"
+                placeholder="Ex. Bhagalpur"
+                value={formData.Bcity}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Billing State"
+                name="Bstate"
+                size="small"
+                placeholder="Ex. Bihar"
+                value={formData.Bstate}
+                onChange={handleChange}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+              <TextField
+                label="Billing Country"
+                name="Bcountry"
+                size="small"
+                placeholder="Ex. India"
+                value={formData.Bcountry}
+                onChange={handleChange}
+              />
+            </FormControl>
+          </Box>
+          <Box sx={{ my: 4 }}>
+            <Typography variant="h6" fontWeight="bold" mb={2}>Package Details (Boxes &amp; Items)</Typography>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {boxes.map((box, boxIndex) => {
+                const boxNumber = boxIndex + 1;
+                const boxItems = orders
+                  .map((o, i) => ({ order: o, index: i }))
+                  .filter(({ order }) => parseInt(order.box_no) === boxNumber);
+                return (
+                  <Paper key={boxIndex} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                    {/* Box header */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5, bgcolor: '#f0f4ff', borderBottom: '1px solid', borderColor: 'divider' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip label={boxNumber} size="small" color="primary" />
+                        <Typography variant="body2" fontWeight="bold" color="primary.main">Box {boxNumber}</Typography>
+                      </Box>
+                      {boxes.length > 1 && !isShipped && (
+                        <Tooltip title="Remove box">
+                          <IconButton size="small" color="error" onClick={() => removeBox(boxIndex)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                    {/* Box dimensions */}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+                      <FormControl sx={{ minWidth: 100, flex: 1 }}>
+                        <TextField label="Length (cm) *" name="length" size="small" type="number" value={box.length} onChange={(e) => handleBoxes(boxIndex, e)} />
+                      </FormControl>
+                      <FormControl sx={{ minWidth: 100, flex: 1 }}>
+                        <TextField label="Width (cm) *" name="breadth" size="small" type="number" value={box.breadth} onChange={(e) => handleBoxes(boxIndex, e)} />
+                      </FormControl>
+                      <FormControl sx={{ minWidth: 100, flex: 1 }}>
+                        <TextField label="Height (cm) *" name="height" size="small" type="number" value={box.height} onChange={(e) => handleBoxes(boxIndex, e)} />
+                      </FormControl>
+                      <Box sx={{ flex: 1, display: 'flex', minWidth: 150 }}>
+                        <FormControl sx={{ flex: 1 }}>
+                          <TextField label="Weight *" name="weight" size="small" type="number" value={box.weight} onChange={(e) => handleBoxes(boxIndex, e)} />
+                        </FormControl>
+                        <FormControl sx={{ minWidth: 70 }}>
+                          <InputLabel>Unit</InputLabel>
+                          <Select value={box.weight_unit} onChange={(e) => handleBoxes(boxIndex, e)} name="weight_unit" size="small" label="Unit">
+                            <MenuItem value="g">gm</MenuItem>
+                            <MenuItem value="kg">kg</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </Box>
+                    {/* Items in this box */}
+                    <Box sx={{ p: 2 }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Items in Box {boxNumber}
+                      </Typography>
+                      {boxItems.length === 0 && (
+                        <Typography variant="caption" color="text.disabled" display="block" textAlign="center" py={1} fontStyle="italic">
+                          No items yet — click &quot;+ Add Item&quot; to add one.
+                        </Typography>
+                      )}
+                      {boxItems.map(({ order, index }) => (
+                        <Box key={index} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1.5, p: 1.5, bgcolor: 'grey.50', border: '1px solid', borderColor: 'grey.200', borderRadius: 1, alignItems: 'center' }}>
+                          <FormControl sx={{ minWidth: 200, flex: 2 }}>
+                            <TextField label="Product Name *" name="product_name" size="small" value={order.product_name} onChange={(e) => handleOrders(index, e)} />
+                          </FormControl>
+                          <FormControl sx={{ minWidth: 80, flex: 1 }}>
+                            <TextField label="Qty *" name="product_quantity" size="small" type="number" value={order.product_quantity} onChange={(e) => handleOrders(index, e)} />
+                          </FormControl>
+                          <FormControl sx={{ minWidth: 100, flex: 1 }}>
+                            <TextField label="Price (₹) *" name="selling_price" size="small" type="number" value={order.selling_price} onChange={(e) => handleOrders(index, e)} />
+                          </FormControl>
+                          {boxItems.length > 1 && !isShipped && (
+                            <Tooltip title="Remove item">
+                              <IconButton size="small" color="error" onClick={() => removeProduct(index)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      ))}
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1.5 }}>
+                        <Button variant="contained" color="success" size="small" onClick={() => addProduct(boxNumber)} disabled={isShipped}>
+                          + Add Item
+                        </Button>
+                      </Box>
+                    </Box>
+                  </Paper>
+                );
+              })}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                <Button variant="contained" onClick={addBox} disabled={isShipped}>
+                  + Add Box
+                </Button>
+              </Box>
+            </div>
+          </Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formData.isB2B}
+                onChange={handleChange}
+                name="isB2B"
+              />
+            }
+            label="Is this is a B2B shipment?"
+          />
+          {formData.isB2B ? (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+              <FormControl sx={{ minWidth: 150, flex: 1 }}>
+                <TextField
+                  label="Invoice Number"
+                  name="invoiceNumber"
+                  size="small"
+                  value={formData.invoiceNumber}
+                  onChange={handleChange}
+                />
+              </FormControl>
+              <FormControl sx={{ minWidth: 150, flex: 1 }}>
+                <TextField
+                  label="Invoice Date"
+                  type="date"
+                  size="small"
+                  name="invoiceDate"
+                  value={formData.invoiceDate}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </FormControl>
+              <FormControl sx={{ minWidth: 150, flex: 1 }}>
+                <TextField
+                  label="Invoice Amount"
+                  name="invoiceAmount"
+                  type="number"
+                  size="small"
+                  value={formData.invoiceAmount}
+                  onChange={handleChange}
+                />
+              </FormControl>
+              <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+                <label>Invoice</label>
+                <input
+                  type="file"
+                  onChange={handleInvoice}
+                />
+                <Box className="flex items-center mt-2">
+                  <a type="button" className="m-2 w-20 px-5 py-2 border rounded bg-blue-600 text-white" target="_blank" href={import.meta.env.VITE_APP_BUCKET_URL + formData.invoiceUrl}>View</a>
+                  <Button
+                    variant="contained"
+                    onClick={uploadInvoice}
+                    className="bg-blue-500"
+                    sx={{ borderRadius: '4px' }}
+                  >
+                    Update
+                  </Button>
+                </Box>
+              </FormControl>
+              <FormControl fullWidth sx={{ minWidth: 300 }}>
+                <TextField
+                  label="E-Waybill"
+                  name="ewaybill"
+                  value={formData.ewaybill}
+                  onChange={handleChange}
+                />
+              </FormControl>
+            </Box>
+          ) : null}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={!!formData.insurance}
+                onChange={(e) => setFormData(prev => ({ ...prev, insurance: e.target.checked }))}
+                name="insurance"
+              />
+            }
+            label="Do you want insurance?"
+          />
+          <Box sx={{ my: 4 }}>
+            <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Additional Info</div>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+              <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+                <TextField
+                  label="Discount"
+                  name="discount"
+                  size="small"
+                  value={formData.discount}
+                  onChange={handleChange}
+                />
+              </FormControl>
+              <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+                <TextField
+                  label="Seller GST"
+                  name="gst"
+                  size="small"
+                  value={formData.gst}
+                  onChange={handleChange}
+                />
+              </FormControl>
+              <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
+                <TextField
+                  label="Customer GSTIN (FOR B2B)"
+                  name="Cgst"
+                  size="small"
+                  value={formData.Cgst}
+                  onChange={handleChange}
+                />
+              </FormControl>
+            </Box>
+          </Box>
+        </form>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={isShipped}
+        >
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+
+const ShipCard = ({ price, shipment, setIsShipped, setIsShip, getParcels, walletType }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const ship = async () => {
+    setIsLoading(true);
+    fetch(`${API_URL}/shipment/domestic/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': localStorage.getItem('token'),
+      },
+      body: JSON.stringify({
+        orderId: shipment.ord_id,
+        service: price,
+        walletType: walletType,
+      })
+    }).then(response => response.json()).then(async result => {
+      if (result.success) {
+        setIsShipped(true);
+        console.log(result);
+        const message = (result?.message instanceof String) ? result?.message : null;
+        toast.success(message || "Your shipment has been created successfully");
+        getParcels();
+        setIsLoading(false);
+        setIsShip(false);
+      } else {
+        const failureReason = result.message || "Your shipment has not been created";
+        toast.error(failureReason);
+        console.log(result);
+        setIsLoading(false);
+      }
+    });
+  };
+
+  return (
+    <Paper sx={{ p: 2, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box>
+        <div>{`${price.name}${price.publicServiceName ? ` - ${price.publicServiceName}` : ''}` + " " + price.weight}</div>
+        <Box sx={{ mt: 0.5 }}>
+          <Box component="span" sx={{
+            px: 1.2,
+            py: 0.3,
+            fontSize: '0.65rem',
+            fontWeight: 600,
+            borderRadius: '12px',
+            letterSpacing: 0.5,
+            display: 'inline-block',
+            textTransform: 'uppercase',
+            color: price.insurance ? '#065f46' : '#6b7280',
+            backgroundColor: price.insurance ? '#d1fae5' : '#f3f4f6',
+            border: '1px solid',
+            borderColor: price.insurance ? '#10b981' : '#d1d5db'
+          }}>
+            {price.insurance ? 'Insured' : 'Not Insured'}
+          </Box>
+        </Box>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <div>{`₹${Math.round((price.price))}`}</div>
+        <Button
+          variant="contained"
+          onClick={isLoading ? () => { } : () => ship()}
+          disabled={isLoading}
+          sx={{ borderRadius: '4px' }}
+        >
+          {isLoading ? "Shipping..." : "Ship"}
+        </Button>
+      </Box>
+    </Paper>
+  );
+};
+
+const BulkShipCard = ({ price, batchId, pricesLoading, setIsBatchProcessing, setIsBulkShipOpen, walletType }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const shipBulk = async (price) => {
+    setIsLoading(true);
+    try {
+      await shipB2CBulkShipmentService({ batchId: batchId, service: price, walletType: walletType });
+      setIsBatchProcessing(true);
+      setIsBulkShipOpen(false);
+      toast.success("Bulk Shipment Request Accepted!")
+      setIsLoading(false);
+    } catch (error) {
+      const failureReason = error.message || "Bulk Shipment Request Rejected!";
+      toast.error(failureReason);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  return (
+    <Paper sx={{ p: 2, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box>
+        <div>{price.name}</div>
+        <Box sx={{ mt: 0.5 }}>
+          <Box component="span" sx={{
+            px: 1.2,
+            py: 0.3,
+            fontSize: '0.65rem',
+            fontWeight: 600,
+            borderRadius: '12px',
+            letterSpacing: 0.5,
+            display: 'inline-block',
+            textTransform: 'uppercase',
+            color: price.insurance ? '#065f46' : '#6b7280',
+            backgroundColor: price.insurance ? '#d1fae5' : '#f3f4f6',
+            border: '1px solid',
+            borderColor: price.insurance ? '#10b981' : '#d1d5db'
+          }}>
+            {price.insurance ? 'Insured' : 'Not Insured'}
+          </Box>
+        </Box>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <div>{`Serviceable - ${price.total_serviceable}`}</div>
+        <div>{`₹${Math.round((price.price))}`}</div>
+        {
+          !pricesLoading && <Button
+            variant="contained"
+            onClick={isLoading ? () => { } : () => shipBulk(price)}
+            disabled={isLoading}
+            sx={{ borderRadius: '4px' }}
+          >
+            {isLoading ? "Shipping..." : "Ship"}
+          </Button>
+        }
+      </Box>
+    </Paper>
+  )
+}
+
+const ShipList = ({ shipment, isShipOpen, setIsShipOpen, setIsShipped, getParcels }) => {
+  if (!isShipOpen) return null;
+  const [prices, setPrices] = useState([]);
+  const [boxes, setBoxes] = useState([]);
+  const [walletType, setWalletType] = useState(WALLET_TYPES.WALLET);
+
+  useEffect(() => {
+    if (!isShipOpen) return;
+
+    const data = async () => {
+      const getBoxes = await fetch(`${API_URL}/order/domestic/boxes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token'),
+        },
+        body: JSON.stringify({ order: shipment.ord_id }),
+      });
+      const boxesData = await getBoxes.json();
+      setBoxes(boxesData.order);
+      console.log(boxesData.order);
+
+      let weight = 0;
+      let volume = 0;
+      const volumetric = async () => {
+        boxesData.order.map((box) => {
+          weight += parseFloat(box.weight);
+          volume += (parseFloat(box.length) * parseFloat(box.breadth) * parseFloat(box.height));
+        });
+      };
+      await volumetric();
+
+      console.log({
+        method: shipment.shipping_mode,
+        status: "Delivered",
+        origin: shipment.pin,
+        dest: shipment.shipping_postcode,
+        payMode: shipment.pay_method == "topay" ? "COD" : shipment.pay_method,
+        codAmount: shipment.cod_amount,
+        volume,
+        weight,
+        quantity: boxesData.order.length,
+        boxes: boxesData.order
+      });
+
+      const getPrice = await fetch(`${API_URL}/shipment/domestic/price`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({
+          method: shipment.shipping_mode,
+          status: "Delivered",
+          origin: shipment.pin,
+          dest: shipment.shipping_postcode,
+          payMode: shipment.pay_method == "topay" ? "COD" : shipment.pay_method,
+          codAmount: shipment.cod_amount,
+          volume,
+          weight,
+          quantity: boxesData.order.length,
+          boxes: boxesData.order,
+          isShipment: true,
+          insurance: shipment.insurance,
+          isB2B: shipment.is_b2b,
+          invoiceAmount: shipment.invoice_amount
+        }),
+      });
+      const prices = await getPrice.json();
+      setPrices(prices.prices);
+    };
+    data();
+  }, [isShipOpen, shipment]);
+
+  return (
+    <Dialog open={isShipOpen} onClose={() => setIsShipOpen(false)} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <div>CHOOSE YOUR {shipment.is_b2b ? "B2B" : "B2C"} SERVICE</div>
+          <IconButton onClick={() => setIsShipOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ mt:2, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel id="wallet-type-label">Pay With</InputLabel>
+            <Select
+              labelId="wallet-type-label"
+              id="wallet-type-select"
+              value={walletType}
+              label="Pay With"
+              onChange={(e) => setWalletType(e.target.value)}
+            >
+              {Object.values(WALLET_TYPES).map((type) => (
+                <MenuItem key={type} value={type}>{type === WALLET_TYPES.WALLET ? 'Wallet Balance' : 'Credit Balance'}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          {prices.length ? prices.map((price, index) => (
+            <ShipCard
+              setIsShipped={setIsShipped}
+              setIsShip={setIsShipOpen}
+              key={index}
+              shipment={shipment}
+              price={price}
+              getParcels={getParcels}
+              walletType={walletType}
+            />
+          )) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <div>Loading shipping options...</div>
+            </Box>
+          )}
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const BulkShipList = ({ batch, isBulkShipOpen, setIsBulkShipOpen, setIsBatchProcessing }) => {
+  if (!isBulkShipOpen) return null;
+  const [prices, setPrices] = useState([]);
+  const [loadingState, setLoadingState] = useState(true);
+  const [totalShipments, setTotalShipments] = useState(null);
+  const [processedShipments, setProcessedShipments] = useState(null);
+  const [requestId, setRequestId] = useState(null);
+  const [walletType, setWalletType] = useState(WALLET_TYPES.WALLET);
+
+  const initiatePriceFetching = async () => {
+    try {
+      setLoadingState(true);
+      const data = await getB2CBulkShipmentPriceService({ batchId: batch })
+      const requestId = data.requestId;
+      if (!requestId) {
+        toast.error(data?.message || "Something went wrong");
+        return;
+      }
+      setRequestId(requestId);
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    } finally {
+      setLoadingState(false);
+    }
+  };
+  useEffect(() => {
+    if (!isBulkShipOpen) return;
+    initiatePriceFetching();
+  }, []);
+
+  const pollPriceStatus = async (requestId) => {
+    try {
+      const data = await getB2CBulkShipmentPriceStatusService({ requestId: requestId });
+      if (data.total_shipments == 0) {
+        initiatePriceFetching();
+        return true;
+      }
+      setProcessedShipments(data.total_processed);
+      setTotalShipments(data.total_shipments);
+      const prices = (data.prices || []).sort((a, b) => (a.price || 0) - (b.price || 0));
+      setPrices(prices);
+      const completed = data.total_processed === data.total_shipments;
+      return completed;
+    } catch (error) {
+      console.error("Error polling price status:", error);
+      toast.error(error.message || "Failed to fetch price status");
+    }
+  }
+
+
+  useEffect(() => {
+    if (!requestId) return;
+
+    let timeout;
+    let interval;
+
+    const startPolling = async () => {
+      timeout = setTimeout(async () => {
+        interval = setInterval(async () => {
+          const completed = await pollPriceStatus(requestId);
+
+          if (completed) {
+            clearInterval(interval);
+            setLoadingState(false);
+          }
+        }, 2000);
+      }, 1000);
+    };
+
+    startPolling();
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
+  }, [requestId]);
+
+  return (
+    <Dialog open={isBulkShipOpen} onClose={() => setIsBulkShipOpen(false)} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <div>CHOOSE YOUR SERVICE</div>
+          <IconButton onClick={() => setIsBulkShipOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <div>Processed {processedShipments} out of {totalShipments} </div>
+          <div>
+            <CircularProgress
+              variant="determinate"
+              value={(processedShipments / totalShipments) * 100}
+            />
+          </div>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ mt: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel id="bulk-wallet-type-label">Pay With</InputLabel>
+            <Select
+              labelId="bulk-wallet-type-label"
+              id="bulk-wallet-type-select"
+              value={walletType}
+              label="Pay With"
+              onChange={(e) => setWalletType(e.target.value)}
+            >
+              {Object.values(WALLET_TYPES).map((type) => (
+                <MenuItem key={type} value={type}>{type === WALLET_TYPES.WALLET ? 'Wallet Balance' : 'Credit Balance'}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          {prices.length ? prices.map((price, index) => (
+            <BulkShipCard
+              pricesLoading={loadingState}
+              setIsBulkShipOpen={setIsBulkShipOpen}
+              setIsBatchProcessing={setIsBatchProcessing}
+              price={price}
+              batchId={batch}
+              walletType={walletType}
+            />
+          )) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <div>Loading shipping options...</div>
+            </Box>
+          )}
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const PickupRequest = ({ setPickup }) => {
+  const [formData, setFormData] = useState({
+    wid: "",
+    pickDate: "",
+    pickTime: "",
+    packages: "",
+    serviceId: ""
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await fetch(`${API_URL}/shipment/domestic/pickup/request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token')
+      },
+      body: JSON.stringify(formData)
+    }).then(response => response.json()).then(result => {
+      alert(result.schedule);
+    });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  return (
+    <Dialog open={true} onClose={() => setPickup(false)} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <div>Pickup Request</div>
+          <IconButton onClick={() => setPickup(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <FormControl fullWidth required>
+            <InputLabel shrink>Pickup Warehouse Name</InputLabel>
+            <Box sx={{ mt: 2 }}>
+              <WarehouseSelect
+                value={formData.wid}
+                onChange={(wid) => setFormData((prev) => ({ ...prev, wid }))}
+              />
+            </Box>
+          </FormControl>
+
+          <FormControl fullWidth required>
+            <InputLabel>Delivery Partner</InputLabel>
+            <Select
+              value={formData.serviceId}
+              onChange={handleChange}
+              name="serviceId"
+              label="Delivery Partner"
+            >
+              <MenuItem value="">Select Service</MenuItem>
+              <MenuItem value="2">Delhivery (10Kg)</MenuItem>
+              <MenuItem value="1">Delhivery (500gm)</MenuItem>
+            </Select>
+          </FormControl>
+
+          <TextField
+            required
+            fullWidth
+            label="Pickup Date"
+            type="date"
+            name="pickDate"
+            value={formData.pickDate}
+            onChange={handleChange}
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            required
+            fullWidth
+            label="Pickup Time"
+            type="time"
+            name="pickTime"
+            value={formData.pickTime}
+            onChange={handleChange}
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            required
+            fullWidth
+            label="No of packages"
+            type="number"
+            name="packages"
+            value={formData.packages}
+            onChange={handleChange}
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button variant="contained" onClick={handleSubmit}>
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// Add pagination component
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const pages = [];
+
+  // Function to add page numbers to the array
+  const addPageNumber = (pageNum) => {
+    pages.push({
+      number: pageNum,
+      isCurrent: pageNum === currentPage
+    });
+  };
+
+  // Add first page
+  addPageNumber(1);
+
+  if (totalPages <= 7) {
+    // If total pages is 7 or less, show all pages
+    for (let i = 2; i < totalPages; i++) {
+      addPageNumber(i);
+    }
+  } else {
+    if (currentPage <= 4) {
+      // We're near the start
+      for (let i = 2; i <= 5; i++) {
+        addPageNumber(i);
+      }
+      pages.push({ number: '...' });
+    } else if (currentPage >= totalPages - 3) {
+      // We're near the end
+      pages.push({ number: '...' });
+      for (let i = totalPages - 4; i < totalPages; i++) {
+        addPageNumber(i);
+      }
+    } else {
+      // We're in the middle
+      pages.push({ number: '...' });
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        addPageNumber(i);
+      }
+      pages.push({ number: '...' });
+    }
+  }
+
+  // Add last page if we have more than 1 page
+  if (totalPages > 1) {
+    addPageNumber(totalPages);
+  }
+
+  return (
+    <div className="flex items-center justify-center space-x-1 sm:space-x-2 mt-4">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm ${currentPage === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+      >
+        <span className="hidden sm:inline">Previous</span>
+        <span className="sm:hidden">Prev</span>
+      </button>
+
+      {pages.map((page, idx) => (
+        <button
+          key={idx}
+          onClick={() => page.number !== '...' && onPageChange(page.number)}
+          className={`min-w-[30px] px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm ${page.number === '...' ? 'cursor-default'
+            : page.isCurrent ? 'bg-blue-500 text-white'
+              : 'bg-white hover:bg-gray-100 border'
+            }`}
+        >
+          {page.number}
+        </button>
+      ))}
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm ${currentPage === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+      >
+        <span className="hidden sm:inline">Next</span>
+        <span className="sm:hidden">Next</span>
+      </button>
+    </div>
+  );
+};
+
+// Modal component for better dialog display
+const Modal = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[999] flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
+      <div className="relative z-[1000] bg-white rounded-lg w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto p-4">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const OrderDetailsDialog = ({ isOpen, onClose, orderId, shipment }) => {
+  const [boxes, setBoxes] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen || !orderId) return;
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        const [ordRes, boxRes] = await Promise.all([
+          fetch(`${API_URL}/order/domestic`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
+            body: JSON.stringify({ order: orderId }),
+          }).then(res => res.json()),
+          fetch(`${API_URL}/order/domestic/boxes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
+            body: JSON.stringify({ order: orderId }),
+          }).then(res => res.json())
+        ]);
+        if (ordRes.success) setItems(ordRes.order);
+        if (boxRes.success) setBoxes(boxRes.order);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, [isOpen, orderId]);
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'DELIVERED': return 'success';
+      case 'CANCELLED': return 'error';
+      case 'RTO':
+      case 'RTO DELIVERED': return 'warning';
+      default: return 'primary';
+    }
+  };
+
+  return (
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: { xs: 2, sm: 3 },
+          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+          m: { xs: 1, sm: 2 },
+          width: { xs: 'calc(100% - 16px)', sm: 'auto' }
+        }
+      }}
+    >
+      <DialogTitle sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Typography variant="h6" fontWeight="700" color="text.primary" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+              Order Details - {orderId}
+            </Typography>
+            <Chip
+              label={shipment.status || 'PENDING'}
+              color={getStatusColor(shipment.status)}
+              size="small"
+              sx={{ fontWeight: 600, px: 1, height: 20, fontSize: '0.65rem' }}
+            />
+          </Box>
+          <IconButton onClick={onClose} sx={{ '&:hover': { color: 'error.main', bgcolor: 'error.light' }, p: 0.5 }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <Divider sx={{ mt: 2 }} />
+      </DialogTitle>
+
+      <DialogContent sx={{ p: { xs: 2, sm: 3 }, pt: 0 }}>
+        {loading ? (
+          <Box p={8} textAlign="center" display="flex" flexDirection="column" alignItems="center" gap={2}>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500"></div>
+            <Typography color="text.secondary">Fetching order details...</Typography>
+          </Box>
+        ) : (
+          <Box className="space-y-6 md:space-y-8">
+            <Box className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, bgcolor: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                <Typography variant="subtitle2" color="text.secondary" fontWeight="700" sx={{ letterSpacing: '0.05em', fontSize: '0.7rem' }} gutterBottom>
+                  CUSTOMER INFORMATION
+                </Typography>
+                <Box className="grid grid-cols-2 gap-x-3 gap-y-4 mt-4">
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Customer Name</Typography>
+                    <Typography variant="body2" fontWeight="600" color="text.primary" sx={{ wordBreak: 'break-word' }}>{shipment.customer_name}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Contact Number</Typography>
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{shipment.customer_mobile}</Typography>
+                  </Box>
+                  <Box sx={{ gridColumn: 'span 2' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Customer Email</Typography>
+                    <Typography variant="body2" sx={{ wordBreak: 'break-all', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{shipment.customer_email || 'N/A'}</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, bgcolor: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                <Typography variant="subtitle2" color="text.secondary" fontWeight="700" sx={{ letterSpacing: '0.05em', fontSize: '0.7rem' }} gutterBottom>
+                  SHIPMENT INFO
+                </Typography>
+                <Box className="grid grid-cols-2 gap-x-2 gap-y-4 mt-4">
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Service Type</Typography>
+                    <Chip label={shipment.is_b2b ? "B2B" : "B2C"} size="small" color="default" sx={{ mt: 0.5, fontWeight: 700, height: 20 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Courier Service</Typography>
+                    <Typography variant="body2" fontWeight="600" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                      {shipment.service_name} {shipment.shipping_mode ? `(${shipment.shipping_mode})` : ''}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Payment Mode</Typography>
+                    <Typography variant="body2" fontWeight="700" color={shipment.pay_method === "COD" ? "error.main" : "success.main"} sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                      {shipment.pay_method}
+                      {shipment.pay_method === "COD" && <span> (₹{parseInt(shipment.cod_amount)})</span>}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Warehouse</Typography>
+                    <Typography variant="body2" fontWeight="600" color="text.primary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-word' }}>{shipment.warehouseName || 'N/A'}</Typography>
+                  </Box>
+                  <Box sx={{ gridColumn: 'span 2' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">AWB Number</Typography>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <Typography variant="body2" fontWeight="800" color="primary.main" sx={{ wordBreak: 'break-all', fontSize: { xs: '0.85rem', sm: '1rem' } }}>{shipment.awb || 'N/A'}</Typography>
+                      {shipment.awb && (
+                        <Tooltip title="Copy AWB">
+                          <IconButton size="small" onClick={() => handleCopy(shipment.awb)} sx={{ p: 0.5 }}>
+                            <ContentCopyIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+
+            <Box className="grid grid-cols-1 md:grid-cols-2 gap-6 px-1">
+              <Box>
+                <Typography variant="subtitle2" fontWeight="800" display="flex" alignItems="center" gap={1.5} mb={2} color="text.primary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  <Box sx={{ width: 6, height: 18, bgcolor: 'primary.main', borderRadius: 0.5 }} />
+                  ORIGIN
+                </Typography>
+                <Box sx={{ pl: 2.5 }}>
+                  <Typography variant="body2" fontWeight="700" color="text.primary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                    {shipment.city}, {shipment.state}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                    {shipment.country} — {shipment.pin}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" fontWeight="800" display="flex" alignItems="center" gap={1.5} mb={2} color="text.primary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  <Box sx={{ width: 6, height: 18, bgcolor: 'error.main', borderRadius: 0.5 }} />
+                  DESTINATION
+                </Typography>
+                <Box sx={{ pl: 2.5 }}>
+                  <Typography variant="body2" fontWeight="700" color="text.primary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                    {shipment.shipping_city}, {shipment.shipping_state}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                    {shipment.shipping_country} — {shipment.shipping_postcode}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            <Box>
+              <Typography variant="subtitle2" fontWeight="800" display="flex" alignItems="center" gap={1.5} mb={2} color="text.primary">
+                <InventoryIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                PACKAGES ({boxes.length})
+              </Typography>
+              <Paper variant="outlined" sx={{ overflowX: 'auto', borderRadius: 2, border: '1px solid #E5E7EB' }}>
+                <table className="w-full text-left border-collapse min-w-[500px]">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest">Box #</th>
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest">Dimensions (L×B×H cm)</th>
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest text-right">Weight</th>
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest text-center">Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {boxes.map((b, i) => (
+                      <tr key={i} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm font-semibold text-gray-700">{b.box_no}</td>
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-600">{b.length} × {b.breadth} × {b.height}</td>
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-900 font-bold text-right">{b.weight} {b.weight_unit}</td>
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-600 text-center font-medium">{b.quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Paper>
+            </Box>
+
+            <Box>
+              <Typography variant="subtitle2" fontWeight="800" display="flex" alignItems="center" gap={1.5} mb={2} color="text.primary">
+                <ListAltIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                ITEM DETAILS
+              </Typography>
+              <Paper variant="outlined" sx={{ overflowX: 'auto', borderRadius: 2, border: '1px solid #E5E7EB' }}>
+                <table className="w-full text-left border-collapse min-w-[500px]">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest">Box #</th>
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest">Product Name</th>
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest text-center">Qty</th>
+                      <th className="p-3 sm:p-4 font-bold text-gray-600 text-[10px] uppercase tracking-widest text-right">Unit Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((it, i) => (
+                      <tr key={i} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm font-semibold text-gray-700">{it.box_no}</td>
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-600 font-medium" style={{ wordBreak: 'break-word' }}>{it.product_name}</td>
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-600 text-center font-bold">{it.product_quantity}</td>
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-900 font-bold text-right">₹{parseFloat(it.selling_price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Paper>
+            </Box>
+
+            <Box display="flex" justifyContent="flex-end" pt={2} pb={2}>
+              <Paper variant="elevation" elevation={0} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3, minWidth: { xs: '100%', sm: 280 }, bgcolor: '#F3F4F6', border: '1px solid #E5E7EB' }}>
+                <Box display="flex" justifyContent="space-between" mb={1.5}>
+                  <Typography variant="body2" fontWeight="600" color="text.secondary">Total Items</Typography>
+                  <Typography variant="body2" fontWeight="800" color="text.primary">{items.reduce((acc, item) => acc + parseInt(item.product_quantity), 0)}</Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" mb={1.5}>
+                  <Typography variant="body2" fontWeight="600" color="text.secondary">Total dead weight</Typography>
+                  <Typography variant="body2" fontWeight="800" color="text.primary">{boxes.reduce((acc, box) => acc + parseFloat(box.weight), 0).toFixed(3)} {boxes[0]?.weight_unit || 'kg'}</Typography>
+                </Box>
+                <Divider sx={{ my: 2, borderColor: '#D1D5DB' }} />
+                <Box display="flex" justifyContent="space-between" alignItems="baseline">
+                  <Typography variant="subtitle1" fontWeight="800" color="text.primary">Total Amount</Typography>
+                  <Typography variant="h6" fontWeight="900" color="primary.main">₹{items.reduce((acc, item) => acc + (parseFloat(item.selling_price) * parseInt(item.product_quantity)), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Typography>
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const Listing = ({ step, setStep }) => {
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigatedOrderId = location.state?.orderId ?? null;
+  const [openedNavigatedOrderId, setOpenedNavigatedOrderId] = useState(false);
+  const [shipments, setShipments] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pickup, setPickup] = useState(false);
+  const [selectedShipment, setSelectedShipment] = useState(null);
+  const [isManageOpen, setIsManageOpen] = useState(false);
+  const [isShipOpen, setIsShipOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isTrackingShareOpen, setIsTrackingShareOpen] = useState(false);
+  const [currentTrackingShareData, setCurrentTrackingShareData] = useState(null);
+  const [actionStates, setActionStates] = useState({});
+  const [selectedBatch, setSelectedBatch] = useState(searchParams.get("batch_id"));
+  const [isBulkShipOpen, setIsBulkShipOpen] = useState(false);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(true);
+  const [bulkManifestedShipments, setBulkManifestedShipments] = useState(0);
+  const [bulkFailedShipments, setBulkFailedShipments] = useState(0);
+  const [bulkManifestingShipments, setBulkManifestingShipments] = useState(0);
+  const [bulkTotalShipments, setBulkTotalShipments] = useState(0);
+
+  const pollBatchState = async () => {
+    try {
+      const data = await getShipB2CBulkShipmentStatusService({
+        batchId: selectedBatch,
+      });
+
+      const manifested = Number(data.total_batch_manifested_shipments);
+      const failed = Number(data.total_batch_failed_shipments);
+      const manifesting = Number(data.total_batch_manifesting_shipments);
+      const total = Number(data.total_batch_shipments);
+
+      setBulkManifestedShipments(manifested);
+      setBulkFailedShipments(failed);
+      setBulkManifestingShipments(manifesting);
+      setBulkTotalShipments(total);
+
+      return (manifesting === 0);
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (!isBatchProcessing || !selectedBatch) {
+      setIsBatchProcessing(false);
+      return;
+    }
+
+    let interval;
+    let timeout;
+
+    timeout = setTimeout(async () => {
+      const completed = await pollBatchState();
+
+      if (completed) {
+        setIsBatchProcessing(false);
+        return;
+      }
+
+      interval = setInterval(async () => {
+        const completed = await pollBatchState();
+
+        if (completed) {
+          clearInterval(interval);
+          setIsBatchProcessing(false);
+        }
+      }, 5000);
+    }, 2000);
+
+    return () => {
+      clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
+  }, [isBatchProcessing, selectedBatch]);
+  // Dynamic DataGrid height
+  const [dataGridHeight, setDataGridHeight] = useState(Math.round(window.innerHeight * 0.65));
+  useEffect(() => {
+    const handleResize = () => {
+      setDataGridHeight(Math.round(window.innerHeight * 0.65));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Helper function to get action state for a specific shipment
+  const getActionState = (orderId, action) => {
+    return actionStates[orderId]?.[action] || false;
+  };
+
+  // Helper function to set action state for a specific shipment
+  const setActionState = (orderId, action, value) => {
+    setActionStates(prev => ({
+      ...prev,
+      [orderId]: {
+        ...prev[orderId],
+        [action]: value
+      }
+    }));
+  };
+
+  const handleShip = (shipment) => {
+    setSelectedShipment(shipment);
+    setIsShipOpen(true);
+  };
+
+  const handleBulkShip = (batch) => {
+    setSelectedBatch(batch);
+    setIsBulkShipOpen(true);
+  }
+
+  const handleClone = async (shipment) => {
+    try {
+      const clone = confirm('Do you want to clone this order?');
+      if (!clone) return;
+
+      setActionState(shipment.ord_id, 'cloning', true);
+      await cloneOrderService(shipment.ord_id);
+      toast.success("Order cloned successfully");
+      getParcels();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Failed to clone order");
+    } finally {
+      setActionState(shipment.ord_id, 'cloning', false);
+    }
+  };
+
+  const handleCancel = async (shipment) => {
+    const cancel = confirm('Do you want to cancel this shipment?');
+    if (!cancel) return;
+
+    setActionState(shipment.ord_id, 'cancelling', true);
+    try {
+      const response = await fetch(`${API_URL}/shipment/cancel`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({ order: shipment.ord_id })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(result?.message || "Your shipment has been cancelled");
+        getParcels();
+      } else {
+        toast.error(result?.message || "Your shipment has not been cancelled");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to cancel shipment");
+    } finally {
+      setActionState(shipment.ord_id, 'cancelling', false);
+    }
+  };
+
+  const handleDelete = async (shipment) => {
+    const del = confirm('Do you want to delete this order?');
+    if (!del) return;
+
+    setActionState(shipment.ord_id, 'deleting', true);
+    try {
+      const response = await fetch(`${API_URL}/order/domestic/delete`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({ orderId: shipment.ord_id })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        alert(result.message);
+        getParcels();
+      } else {
+        alert("Failed to delete order");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete order");
+    } finally {
+      setActionState(shipment.ord_id, 'deleting', false);
+    }
+  };
+
+  const handleRefresh = async (shipment) => {
+    setActionState(shipment.ord_id, 'refreshing', true);
+    try {
+      const response = await fetch(`${API_URL}/shipment/domestic/refresh`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({ ord_id: shipment.ord_id })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        getParcels(); // Refresh data to show updated AWB
+      } else {
+        alert("Your shipment is still under processing, please wait...");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to refresh shipment");
+    } finally {
+      setActionState(shipment.ord_id, 'refreshing', false);
+    }
+  };
+
+  const mergePDFs = async (pdfBase64s) => {
+    if (!Array.isArray(pdfBase64s) || pdfBase64s.length === 0) {
+      throw new Error("No PDF data provided to mergePDFs");
+    }
+  
+    const mergedPdf = await PDFDocument.create();
+  
+    for (const base64 of pdfBase64s) {
+      if (!base64) continue;
+  
+      // Some APIs may return data URLs ("data:application/pdf;base64,....")
+      const cleanBase64 = base64.includes(",") ? base64.split(",")[1] : base64;
+  
+      const pdfBytes = Uint8Array.from(atob(cleanBase64), (c) => c.charCodeAt(0));
+      const pdf = await PDFDocument.load(pdfBytes);
+      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+      copiedPages.forEach((page) => mergedPdf.addPage(page));
+    }
+  
+    const mergedBytes = await mergedPdf.save();
+    const blob = new Blob([mergedBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    return url;
+  };
+
+  // const handleGetLabel = async (shipment) => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/shipment/domestic/label`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Accept': 'application/json',
+  //         'Content-Type': 'application/json',
+  //         'Authorization': localStorage.getItem('token')
+  //       },
+  //       body: JSON.stringify({ orders: [shipment.ord_id] })
+  //     });
+  //     const result = await response.json();
+  //     const base64label = result?.labels?.[0];
+  //     if (result.success && base64label) {
+  //       const link = document.createElement('a');
+  //       link.href = `data:application/pdf;base64,${base64label}`;
+  //       link.download = `Label_${shipment.ord_id}.pdf`;
+  //       document.body.appendChild(link);
+  //       link.click();
+  //       document.body.removeChild(link);
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     alert("Failed to get label");
+  //   }
+  // };
+  const handleGetLabel = async (shipment) => {
+      try {
+        toast.info("Getting labels, please wait...")
+        const response = await fetch(`${API_URL}/shipment/domestic/label`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': localStorage.getItem('token')
+          },
+          body: JSON.stringify({ orders: [shipment.ord_id] })
+        });
+        const result = await response.json();
+        const base64s = result?.labels || [];
+        if (!base64s.length) {
+          toast.error("No labels found");
+          return;
+        }
+        ///DOWNLOAD EACH LABEL AND MERGE INTO A SINGLE PDF
+        const pdfBase64s = base64s;
+        const mergedPdfUrl = await mergePDFs(pdfBase64s);
+        const link = document.createElement('a');
+        link.href = mergedPdfUrl;
+        link.download = `labels_${new Date().toISOString()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to get label");
+      }
+    };
+
+  const handleTrackAndShare = async (reportRow) => {
+    if (!reportRow?.awb) {
+      toast.error("AWB number is not available for this shipment.");
+      return;
+    }
+
+    setSelectedShipment(reportRow);
+    setCurrentTrackingShareData(null);
+    setIsTrackingShareOpen(true);
+
+    try {
+      const response = await fetch(`${API_URL}/shipment/domestic/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token'),
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ ord_id: reportRow.ord_id })
+      });
+      const result = await response.json();
+      if (result.success) {
+        setCurrentTrackingShareData(result);
+      } else {
+        toast.error(result.message || "Failed to fetch tracking data.");
+        setCurrentTrackingShareData({ success: false, message: result.message || "Failed to load tracking." });
+      }
+    } catch (error) {
+      toast.error("Error fetching tracking data. Please check your network.");
+      setCurrentTrackingShareData({ success: false, message: "Network error or server issue." });
+    }
+  };
+  const [filters, setFilters] = useState({
+    customer_email: "",
+    orderId: "",
+    customer_name: "",
+    status: "",
+    startDate: "",
+    endDate: ""
+  });
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const [abortController, setAbortController] = useState(null);
+
+  // Debounce filter changes
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setPage(1); // Reset to first page when filters change
+      setDebouncedFilters(filters);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timerId);
+  }, [filters]);
+
+  // Fetch data with filters and pagination
+  const fetchData = async () => {
+      if (abortController) {
+        abortController.abort();
+      }
+      const newController = new AbortController();
+      setAbortController(newController);
+
+      setIsLoading(true);
+      try {
+        const queryParams = new URLSearchParams({
+          page,
+          ...(selectedBatch && { batch_id: selectedBatch }),
+          ...(debouncedFilters.customer_name && { customer_name: debouncedFilters.customer_name }),
+          ...(debouncedFilters.customer_email && { customer_email: debouncedFilters.customer_email }),
+          ...(debouncedFilters.orderId && { orderId: debouncedFilters.orderId }),
+          ...(debouncedFilters.status && { status: debouncedFilters.status }),
+          ...(debouncedFilters.startDate && { startDate: convertToUTCISOString(debouncedFilters.startDate) }),
+          ...(debouncedFilters.endDate && { endDate: convertToUTCISOString(`${debouncedFilters.endDate}T23:59:59.999Z`) })
+        });
+
+        const response = await fetch(`${API_URL}/order/domestic/merchant?${queryParams}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': localStorage.getItem('token'),
+          },
+          signal: newController.signal
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          // // Sort orders to prioritize unshipped orders
+          // const unShippedShipments = result.order.filter(shipment => !shipment.awb);
+          // const shippedShipments = result.order.filter(shipment => shipment.awb);
+          // const sortedShipments = [...unShippedShipments, ...shippedShipments];
+
+          setShipments(result.order);
+          setTotalPages(result.totalPages || 1);
+        } else {
+          alert("Failed to fetch parcels");
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error:', error);
+          alert('An error occurred during Order fetch');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  useEffect(() => {
+    fetchData();
+  }, [debouncedFilters, page]);
+
+  // Auto-open ShipList when navigated here with a new orderId from CreateOrder
+  useEffect(() => {
+    if (openedNavigatedOrderId) return;
+    if (!navigatedOrderId || shipments.length === 0) return;
+    const target = shipments.find((s) => String(s.ord_id) === String(navigatedOrderId));
+    if (target) {
+      // Clear the navigation state so a refresh doesn't re-trigger this
+      window.history.replaceState({}, document.title);
+      handleShip(target);
+      setOpenedNavigatedOrderId(true);
+    }
+  }, [shipments, navigatedOrderId]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const getParcels = () => {
+    // Trigger refetch by updating filters slightly
+    setDebouncedFilters(prev => ({ ...prev }));
+  };
+
+  const columns = [
+    {
+      field: 'space',
+      headerName: '',
+      sortable: false,
+      disableColumnMenu: true,
+      width: 5,
+    },
+    { field: 'ord_id', headerName: 'Order ID', width: 130 },
+    {
+      field: 'customer_reference_number',
+      headerName: 'Customer Reference Number',
+      width: 100,
+    },
+    {
+      field: 'date',
+      headerName: 'Date',
+      width: 180,
+      renderCell: (params) =>
+        params.row.date ? new Date(params.row.date).toLocaleString() : ''
+    },
+    {
+      field: 'customer_details', headerName: 'Customer Details', width: 250,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', flexDirection: 'column', whiteSpace: 'normal', lineHeight: 1.3, height: 80, justifyContent: 'center' }}>
+          <div className="font-bold">{params.row.customer_name}</div>
+          <div>{params.row.customer_email}</div>
+          <div>{params.row.customer_mobile}</div>
+        </Box>
+      )
+    },
+    {
+      field: 'shipping',
+      headerName: 'Shipping Details',
+      width: 250,
+      renderCell: (params) => {
+        const isShipped = Boolean(params.row.awb);
+        return (
+          <Box sx={{ whiteSpace: 'normal', lineHeight: 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: 80 }}>
+            {isShipped ? (
+              <>
+                <div>Pay Method: {params.row.pay_method} {params.row.pay_method === "COD" ? ` - ₹${parseInt(params.row.cod_amount)}` : ''}</div>
+                <div>{`${params.row.service_name}${params.row.public_vendor_service_name ? ` - ${params.row.public_vendor_service_name}` : ''}`}</div>
+                {params.row.awb && <div>AWB: {params.row.awb}</div>}
+                {params.row.shipping_vendor_reference_id && <div>LRN: {params.row.shipping_vendor_reference_id}</div>}
+              </>
+            ) : (
+              <div style={{ color: '#666' }}>No shipping details yet</div>
+            )}
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 130,
+      renderCell: (params) => {
+        const isShipped = Boolean(params.row.awb);
+        const isCancelled = params.row.cancelled;
+        const isDeleted = params.row.deleted;
+
+        let status = 'Pending';
+        let color = '#92400e';
+        let bgColor = '#fef3c7';
+
+        if (isDeleted) {
+          status = 'Deleted';
+          color = '#dc2626';
+          bgColor = '#fee2e2';
+        } else if (isCancelled) {
+          status = 'Cancelled';
+          color = '#dc2626';
+          bgColor = '#fee2e2';
+        } else if (isShipped) {
+          status = 'Shipped';
+          color = '#166534';
+          bgColor = '#dcfce7';
+        }
+
+        return (
+          <Box
+            sx={{
+              px: 1.5,
+              py: 0.5,
+              backgroundColor: bgColor,
+              color: color,
+              borderRadius: 2,
+              display: 'inline-block',
+              fontSize: '0.875rem',
+              minWidth: 80,
+              textAlign: 'center',
+              lineHeight: 1.5
+            }}
+          >
+            {status}
+          </Box>
+        );
+      }
+    },
+    ...(selectedBatch ? [{
+      field: 'shipping_error',
+      headerName: 'Shipping Error',
+      width: 130,
+    }] : []),
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 500,
+      renderCell: (params) => {
+        const isShipped = Boolean(params.row.is_manifested);
+        const isCancelled = params.row.cancelled;
+        const isDeleted = params.row.deleted;
+        const isProcessing = params.row.in_process;
+        const serviceId = params.row.serviceId;
+
+        return (
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', height: 80 }}>
+            {/* Details Button */}
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                setSelectedShipment(params.row);
+                setIsDetailsOpen(true);
+              }}
+              sx={{ borderRadius: '4px' }}
+            >
+              Details
+            </Button>
+
+            {/* Manage/View Button */}
+            {!isDeleted ? (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => {
+                  setSelectedShipment(params.row);
+                  setIsManageOpen(true);
+                }}
+                sx={{ borderRadius: '4px' }}
+              >
+                {isShipped ? 'View' : 'Manage'}
+              </Button>
+            ) : null}
+
+            {/* Track Button */}
+            {isShipped && (
+              <Button
+                variant="contained"
+                color="secondary"
+                size="small"
+                onClick={() => handleTrackAndShare(params.row)}
+                sx={{ borderRadius: '4px' }}
+              >
+                Track
+              </Button>
+            )}
+
+            {/* Clone Button */}
+            {!selectedBatch &&
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => handleClone(params.row)}
+                disabled={getActionState(params.row.ord_id, 'cloning')}
+                sx={{ borderRadius: '4px' }}
+              >
+                {getActionState(params.row.ord_id, 'cloning') ? 'Cloning...' : 'Clone'}
+              </Button>}
+
+            {/* Refresh Button - only for processing shipments */}
+            {isProcessing ? (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => handleRefresh(params.row)}
+                disabled={getActionState(params.row.ord_id, 'refreshing')}
+                sx={{ borderRadius: '4px' }}
+              >
+                {getActionState(params.row.ord_id, 'refreshing') ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            ) : null}
+
+            {/* Label Button - only for shipped, non-cancelled, specific services */}
+            {(isShipped && !isProcessing && !isCancelled && ![6].includes(serviceId)) ? (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => handleGetLabel(params.row)}
+                sx={{ borderRadius: '4px' }}
+              >
+                Label
+              </Button>
+            ) : null}
+
+            {/* Ship Button - only for unshipped orders */}
+            {!isShipped && !isDeleted && (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => handleShip(params.row)}
+                sx={{ borderRadius: '4px' }}
+              >
+                Ship
+              </Button>
+            )}
+
+            {/* Cancel Button - only for shipped, non-cancelled, specific services */}
+            {isShipped && !isProcessing && !isCancelled && (
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={() => handleCancel(params.row)}
+                disabled={getActionState(params.row.ord_id, 'cancelling')}
+                sx={{ borderRadius: '4px' }}
+              >
+                {getActionState(params.row.ord_id, 'cancelling') ? 'Cancelling...' : 'Cancel'}
+              </Button>
+            )}
+
+            {/* Delete Button - only for unshipped, non-deleted orders */}
+            {!isShipped && !isDeleted && (
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={() => handleDelete(params.row)}
+                disabled={getActionState(params.row.ord_id, 'deleting')}
+                sx={{ borderRadius: '4px' }}
+              >
+                {getActionState(params.row.ord_id, 'deleting') ? 'Deleting...' : 'Delete'}
+              </Button>
+            )}
+          </Box>
+        );
+      }
+    }
+  ];
+
+  return (
+    <>
+      <div className={`w-full p-4 flex flex-col items-center gap-4 ${step == 0 ? "" : "hidden"}`}>
+        {pickup ? <PickupRequest setPickup={setPickup} /> : null}
+
+        {/* Header */}
+        <div className="w-full px-4 relative flex">
+          <div className="text-2xl font-medium">SHIPMENTS</div>
+          <div
+            onClick={() => setPickup(true)}
+            className="px-5 py-1 bg-blue-500 absolute rounded text-white right-4"
+          >
+            Pickup Request
+          </div>
+        </div>
+
+        {/* Filters */}
+        <Paper sx={{ p: 2, width: '100%', overflowX: 'auto' }}>
+          <Box sx={{ display: 'inline-flex', gap: 2, alignItems: 'center', minWidth: '600px', whiteSpace: 'nowrap' }}>
+            <TextField
+              label="Customer Name"
+              name="customer_name"
+              size="small"
+              value={filters.customer_name}
+              onChange={handleChange}
+              sx={{ minWidth: 200 }}
+            />
+            <TextField
+              label="Customer Email"
+              name="customer_email"
+              size="small"
+              value={filters.customer_email}
+              onChange={handleChange}
+              sx={{ minWidth: 200 }}
+            />
+            <TextField
+              label="Order ID"
+              name="orderId"
+              size="small"
+              value={filters.orderId}
+              onChange={handleChange}
+              sx={{ minWidth: 150 }}
+            />
+            <FormControl size="small" sx={{ minWidth: '150px', mr: 1 }}>
+              <InputLabel id="status-select-label" className="bg-white w-full">Status</InputLabel>
+              <Select
+                labelId="status-select-label"
+                value={filters.status}
+                onChange={handleChange}
+                name="status"
+                label="Status"
+                sx={{
+                  backgroundColor: 'white',
+                  borderRadius: 1,
+                }}
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                {Object.values(DOMESTIC_ORDER_STATUS_ENUMS).map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Start Date"
+              type="date"
+              name="startDate"
+              size="small"
+              value={filters.startDate}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{ minWidth: 150 }}
+            />
+            <TextField
+              label="End Date"
+              type="date"
+              name="endDate"
+              size="small"
+              value={filters.endDate}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{ minWidth: 150 }}
+            />
+          </Box>
+        </Paper>
+
+        {
+          selectedBatch ? (
+            <div className="w-full relative flex">
+              <div
+                onClick={() => (bulkManifestedShipments < bulkTotalShipments) ? (!isBatchProcessing ? handleBulkShip(selectedBatch) : null) : null}
+                className="px-5 py-1 bg-blue-500 rounded text-white"
+              >
+                {isBatchProcessing ? "Checking..." : (bulkManifestedShipments < bulkTotalShipments) ? "Ship All" : "Shipped"}
+              </div>
+              <div
+                className="px-5 py-1 bg-blue-500 absolute rounded text-white right-4"
+              >
+                Total : {bulkTotalShipments} &nbsp;
+                Manifesting : {bulkManifestingShipments} &nbsp;
+                Manifested : {bulkManifestedShipments} &nbsp;
+                Failed : {bulkFailedShipments}
+              </div>
+            </div>
+          ) : null
+        }
+
+        {/* DataGrid */}
+        <Box sx={{ height: `${dataGridHeight}px`, width: '100%' }}>
+          <DataGrid
+            rows={shipments}
+            columns={columns}
+            loading={isLoading}
+            hideFooter={true}
+            disableSelectionOnClick
+            getRowId={(row) => row.ord_id}
+            rowHeight={80}
+            sx={{
+              border: '1px solid #000',
+              borderRadius: 0,
+              '& .MuiDataGrid-columnHeaders': {
+                borderBottom: '1px solid #000',
+                backgroundColor: '#A34757',
+                color: '#FFF',
+              },
+              '& .MuiDataGrid-columnHeader': {
+                backgroundColor: '#A34757',
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
+                borderRight: '1px solid #000',
+              },
+              '& .MuiDataGrid-columnHeader:first-of-type, & .MuiDataGrid-cell:first-of-type': {
+                borderLeft: '1px solid #000',
+              },
+              '& .MuiDataGrid-row': {
+                borderBottom: '1px solid #000',
+              },
+            }}
+          />
+        </Box>
+
+        {/* Custom Pagination */}
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
+      </div>
+
+      {/* Modal for ManageForm */}
+      {selectedShipment && (
+        <Modal isOpen={isManageOpen} onClose={() => setIsManageOpen(false)}>
+          <ManageForm
+            fetchData={fetchData}
+            isManage={isManageOpen}
+            setIsManage={setIsManageOpen}
+            shipment={selectedShipment}
+            isShipped={Boolean(selectedShipment.awb)}
+          />
+        </Modal>
+      )}
+
+      {/* Modal for ShipList */}
+      {selectedShipment && (
+        <ShipList
+          shipment={selectedShipment}
+          isShipOpen={isShipOpen}
+          setIsShipOpen={setIsShipOpen}
+          setIsShipped={() => {
+            getParcels();
+            setIsShipOpen(false);
+          }}
+          getParcels={getParcels}
+        />
+      )}
+
+      {selectedBatch && isBulkShipOpen && (
+        <BulkShipList
+          batch={selectedBatch}
+          isBulkShipOpen={isBulkShipOpen}
+          setIsBulkShipOpen={setIsBulkShipOpen}
+          setIsBatchProcessing={setIsBatchProcessing}
+        />
+      )}
+
+      {selectedShipment && (
+        <OrderDetailsDialog
+          isOpen={isDetailsOpen}
+          onClose={() => setIsDetailsOpen(false)}
+          orderId={selectedShipment.ord_id}
+          shipment={selectedShipment}
+        />
+      )}
+
+      <TrackingShareDialog
+        isOpen={isTrackingShareOpen}
+        onClose={() => {
+          setIsTrackingShareOpen(false);
+          setCurrentTrackingShareData(null);
+          setSelectedShipment(null);
+        }}
+        trackingData={currentTrackingShareData}
+        report={selectedShipment}
+      />
+    </>
+  );
+};
+
+const UpdateOrder = () => {
+  const [step, setStep] = useState(0)
+  return (
+    <div className=" relative w-full h-full flex flex-col items-center overflow-x-hidden overflow-y-auto">
+      {step == 0 && <Listing step={step} setStep={setStep} />}
+      {/* <FullDetails /> */}
+    </div>
+  );
+};
+
+export default UpdateOrder;

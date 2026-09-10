@@ -5,12 +5,14 @@ import {
   MapPin,
   Phone,
   Mail,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Instagram,
   ArrowUp,
 } from "lucide-react";
+import { 
+  FaFacebook,
+  FaTwitter,
+  FaInstagram,
+  FaLinkedin,
+} from "react-icons/fa";
 
 const Footer = () => {
   const scrollToTop = () => {
@@ -143,28 +145,28 @@ Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
               className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-500 transition-all duration-300 hover:scale-110"
               aria-label="Facebook"
             >
-              <Facebook className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
+              <FaFacebook className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
             </a>
             <a
               href="#"
               className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-500 transition-all duration-300 hover:scale-110"
               aria-label="Twitter"
             >
-              <Twitter className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
+              <FaTwitter className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
             </a>
             <a
               href="#"
               className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-500 transition-all duration-300 hover:scale-110"
               aria-label="LinkedIn"
             >
-              <Linkedin className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
+              <FaLinkedin className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
             </a>
             <a
               href="#"
               className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-500 transition-all duration-300 hover:scale-110"
               aria-label="Instagram"
             >
-              <Instagram className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
+              <FaInstagram className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
             </a>
           </div>
 

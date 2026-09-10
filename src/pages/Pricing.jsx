@@ -1,10 +1,83 @@
 // src/pages/Pricing.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Check, Calculator, Package, MapPin, DollarSign, Truck, Send, Plus, X, Clock, Globe, Shield, Sparkles } from "lucide-react";
+import { toast } from "react-toastify";
+
+const API_URL = import.meta.env.VITE_APP_API_URL;
+
+// ── ComparePrices modal ────────────────────────────────────────────────────────
+const ComparePrices = ({ method, boxes, status, origin, dest, payMode, codAmount, isB2B, invoiceAmount, onClose }) => {
+  const [prices, setPrices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPrices = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`${API_URL}/shipment/domestic/price`, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ method, boxes, status, origin, dest, payMode, codAmount, isB2B, invoiceAmount, priceCalc: true }),
+        });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        setPrices(result.prices || []);
+      } catch (e) {
+        console.error('Failed to fetch prices:', e);
+        setError('Failed to load prices. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPrices();
+  }, [method, boxes, status, origin, dest, payMode, codAmount, isB2B, invoiceAmount]);
+
+  return (
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col relative">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h2 className="text-3xl font-bold text-gray-800">CHOOSE YOUR SERVICE</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-3xl font-light leading-none transition-colors duration-200" aria-label="Close">&times;</button>
+        </div>
+        <div className="flex-grow overflow-y-auto p-6 space-y-4">
+          {loading && (
+            <div className="flex justify-center items-center h-full min-h-[100px] text-gray-600">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Loading prices...
+            </div>
+          )}
+          {error && <div className="text-red-600 text-center p-4 bg-red-50 rounded-md">{error}</div>}
+          {!loading && !error && prices.length === 0 && (
+            <div className="text-center text-gray-600 p-4 bg-gray-50 rounded-md">No prices found for the selected criteria.</div>
+          )}
+          {!loading && !error && prices.length > 0 && prices.map((price, index) => (
+            <div key={index} className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex justify-between items-center border border-gray-200">
+              <div>
+                <div className="font-semibold text-lg text-gray-800">
+                  {`${price.name}${price.publicServiceName ? ` - ${price.publicServiceName}` : ''}`}
+                  {price.weight && <span className="text-sm font-normal text-gray-600 ml-2">({price.weight})</span>}
+                </div>
+                {price.chargableWeight && (
+                  <div className="text-sm text-gray-500 mt-1">Chargable Weight: {price.chargableWeight} gm</div>
+                )}
+              </div>
+              <div className="text-2xl font-bold text-emerald-600">₹{Math.round(price.price)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Helper Components
-const Field = ({ label, placeholder = "", type = "input", options = [], icon: Icon, onChange }) => (
+const Field = ({ label, placeholder = "", type = "input", options = [], optionValues = null, icon: Icon, name, value, onChange, maxLength }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
     <div className="relative">
@@ -15,10 +88,12 @@ const Field = ({ label, placeholder = "", type = "input", options = [], icon: Ic
         <select 
           className={`w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all duration-200 bg-white appearance-none ${Icon ? 'pl-10' : ''}`}
           aria-label={label}
+          name={name}
+          value={value}
           onChange={onChange}
         >
           {options.map((opt, i) => (
-            <option key={i} value={opt.toLowerCase()}>{opt}</option>
+            <option key={i} value={optionValues ? optionValues[i] : opt.toLowerCase()}>{opt}</option>
           ))}
         </select>
       ) : (
@@ -27,13 +102,17 @@ const Field = ({ label, placeholder = "", type = "input", options = [], icon: Ic
           placeholder={placeholder}
           type={type}
           aria-label={label}
+          name={name}
+          value={value}
+          onChange={onChange}
+          maxLength={maxLength}
         />
       )}
     </div>
   </div>
 );
 
-const SmallField = ({ label, placeholder = "0", type = "text", icon: Icon }) => (
+const SmallField = ({ label, placeholder = "0", type = "text", icon: Icon, name, value, onChange }) => (
   <div>
     <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
     <div className="relative">
@@ -45,43 +124,116 @@ const SmallField = ({ label, placeholder = "0", type = "text", icon: Icon }) => 
         placeholder={placeholder}
         type={type}
         aria-label={label}
+        name={name}
+        value={value}
+        onChange={onChange}
       />
     </div>
   </div>
 );
 
-const SmallSelect = ({ label }) => (
+const SmallSelect = ({ label, name, value, onChange }) => (
   <div>
     <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
     <select 
       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none transition-all duration-200 bg-white appearance-none"
       aria-label={label}
+      name={name}
+      value={value}
+      onChange={onChange}
     >
-      <option>g</option>
-      <option>kg</option>
+      <option value="g">g</option>
+      <option value="kg">kg</option>
     </select>
   </div>
 );
 
 const Pricing = () => {
   const [boxes, setBoxes] = useState([
-    { weight: "", unit: "g", l: "", b: "", h: "", count: 1 },
+    { weight: 0, length: 0, breadth: 0, height: 0, weight_unit: 'g', quantity: 1 },
   ]);
+  const [formData, setFormData] = useState({
+    method: 'Surface',
+    status: 'Delivered',
+    origin: '',
+    dest: '',
+    payMode: 'Pre-paid',
+    codAmount: 0,
+    invoiceAmount: 0,
+    isB2B: false,
+  });
+  const [showCompare, setShowCompare] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        type === 'checkbox'
+          ? checked
+          : name === 'isB2B'
+            ? value === 'true'
+            : type === 'number'
+              ? value === '' ? '' : parseFloat(value)
+              : value,
+    }));
+  };
+
+  const handleBoxChange = (index, e) => {
+    const { name, value, type } = e.target;
+    setBoxes((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [name]: type === 'number'
+          ? value === '' ? '' : (name === 'quantity' ? parseInt(value, 10) : parseFloat(value))
+          : value,
+      };
+      return updated;
+    });
+  };
 
   const addBox = () => {
-    setBoxes([
-      ...boxes,
-      { weight: "", unit: "g", l: "", b: "", h: "", count: 1 },
-    ]);
+    setBoxes((prev) => [...prev, { weight: 0, length: 0, breadth: 0, height: 0, weight_unit: 'g', quantity: 1 }]);
   };
 
   const removeBox = (index) => {
-    setBoxes(boxes.filter((_, i) => i !== index));
+    setBoxes((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Calculating shipping price...");
+    let isValid = true;
+
+    if (!/^\d{6}$/.test(formData.origin) || !/^\d{6}$/.test(formData.dest)) {
+      toast.error('Origin and Destination pincodes must be 6 digits.');
+      isValid = false;
+    }
+    if (formData.isB2B && formData.invoiceAmount < 1) {
+      toast.error('Invoice Amount must be at least 1 for B2B shipments.');
+      isValid = false;
+    }
+    if (formData.payMode === 'COD' && formData.codAmount < 1) {
+      toast.error('COD Amount must be at least 1 for COD shipments.');
+      isValid = false;
+    }
+    boxes.forEach((box, i) => {
+      if (!box.weight || isNaN(parseFloat(box.weight)) || parseFloat(box.weight) <= 0) {
+        toast.error(`Box ${i + 1}: Weight is required and must be greater than 0.`);
+        isValid = false;
+      }
+      if (!box.length || !box.breadth || !box.height ||
+        parseFloat(box.length) <= 0 || parseFloat(box.breadth) <= 0 || parseFloat(box.height) <= 0) {
+        toast.error(`Box ${i + 1}: Length, Breadth, and Height must be greater than 0.`);
+        isValid = false;
+      }
+      if (!box.quantity || parseInt(box.quantity) < 1) {
+        toast.error(`Box ${i + 1}: Quantity must be at least 1.`);
+        isValid = false;
+      }
+    });
+
+    if (isValid) setShowCompare(true);
   };
 
   const features = [
@@ -92,6 +244,14 @@ const Pricing = () => {
   ];
 
   return (
+    <>
+      {showCompare && (
+        <ComparePrices
+          {...formData}
+          boxes={boxes}
+          onClose={() => setShowCompare(false)}
+        />
+      )}
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 py-24 text-center text-white overflow-hidden">
@@ -120,7 +280,7 @@ const Pricing = () => {
             {/* Form - Takes 2/3 of space */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 border border-gray-100">
-                <form className="space-y-8" onSubmit={handleSubmit}>
+                <form className="space-y-8" onSubmit={handleSubmit} noValidate>
                   {/* Basic Details */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -133,56 +293,75 @@ const Pricing = () => {
                         type="select" 
                         options={["Surface", "Express"]} 
                         icon={Truck}
+                        name="method"
+                        value={formData.method}
+                        onChange={handleChange}
                       />
                       <Field 
                         label="Status" 
                         type="select" 
-                        options={["Forward", "RTO", "Reverse"]} 
+                        options={["Forward"]} 
                         icon={Clock}
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
                       />
                       <Field 
                         label="Origin Pincode" 
                         placeholder="Ex. 813210" 
                         icon={MapPin}
+                        name="origin"
+                        value={formData.origin}
+                        onChange={handleChange}
+                        maxLength={6}
                       />
                       <Field 
                         label="Destination Pincode" 
                         placeholder="Ex. 845401" 
                         icon={MapPin}
+                        name="dest"
+                        value={formData.dest}
+                        onChange={handleChange}
+                        maxLength={6}
                       />
-                      <div id="cod-amount-field" style={{ display: 'none' }}>
-                        <Field 
-                          label="COD Amount" 
-                          placeholder="0" 
-                          type="number" 
-                          icon={DollarSign}
-                        />
-                      </div>
                       <Field 
                         label="Payment Mode" 
                         type="select" 
                         options={["Pre-paid", "COD", "Pickup"]} 
                         icon={DollarSign}
-                        onChange={(e) => {
-                          const codField = document.getElementById('cod-amount-field');
-                          if (e.target.value === 'cod') {
-                            codField.style.display = 'block';
-                          } else {
-                            codField.style.display = 'none';
-                          }
-                        }}
+                        name="payMode"
+                        value={formData.payMode}
+                        onChange={handleChange}
                       />
+                      {formData.payMode === 'COD' && (
+                        <Field 
+                          label="COD Amount" 
+                          placeholder="0" 
+                          type="number" 
+                          icon={DollarSign}
+                          name="codAmount"
+                          value={formData.codAmount}
+                          onChange={handleChange}
+                        />
+                      )}
                       <Field 
                         label="Shipment Type" 
                         type="select" 
                         options={["B2C", "B2B"]} 
                         icon={Package}
+                        name="isB2B"
+                        value={formData.isB2B}
+                        onChange={handleChange}
+                        optionValues={[false, true]}
                       />
                       <Field 
                         label="Invoice Amount" 
                         placeholder="0" 
                         type="number" 
                         icon={DollarSign}
+                        name="invoiceAmount"
+                        value={formData.invoiceAmount}
+                        onChange={handleChange}
                       />
                     </div>
                   </div>
@@ -214,12 +393,12 @@ const Pricing = () => {
                               <X className="w-4 h-4" />
                             </button>
                           )}
-                          <SmallField label="Weight" placeholder="0" type="number" />
-                          <SmallSelect label="Unit" />
-                          <SmallField label="L (cm)" placeholder="0" type="number" />
-                          <SmallField label="B (cm)" placeholder="0" type="number" />
-                          <SmallField label="H (cm)" placeholder="0" type="number" />
-                          <SmallField label="Count" placeholder="1" type="number" />
+                          <SmallField label="Weight" placeholder="0" type="number" name="weight" value={box.weight} onChange={(e) => handleBoxChange(index, e)} />
+                          <SmallSelect label="Unit" name="weight_unit" value={box.weight_unit} onChange={(e) => handleBoxChange(index, e)} />
+                          <SmallField label="L (cm)" placeholder="0" type="number" name="length" value={box.length} onChange={(e) => handleBoxChange(index, e)} />
+                          <SmallField label="B (cm)" placeholder="0" type="number" name="breadth" value={box.breadth} onChange={(e) => handleBoxChange(index, e)} />
+                          <SmallField label="H (cm)" placeholder="0" type="number" name="height" value={box.height} onChange={(e) => handleBoxChange(index, e)} />
+                          <SmallField label="Count" placeholder="1" type="number" name="quantity" value={box.quantity} onChange={(e) => handleBoxChange(index, e)} />
                         </div>
                       ))}
                     </div>
@@ -330,6 +509,7 @@ const Pricing = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

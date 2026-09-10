@@ -1,7 +1,7 @@
 // src/App.jsx
 import React from "react";
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import FloatingChatbot from "./components/FloatingChatbot";
@@ -33,6 +33,9 @@ import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
 import RefundCancellation from "./pages/RefundCancellation";
+import Dashboard from './components/Dashboard';
+import Verify from './pages/Verify';
+import { ToastContainer } from "react-toastify";
 
 function Home() {
   return (
@@ -52,12 +55,14 @@ function Home() {
 }
 
 function App() {
+  const { pathname } = useLocation();
   return (
     <>
+      <ToastContainer />
       <ScrollToTop />
       <Navbar />
 
-      <main className="pt-20 pb-16 md:pb-0">
+      <main className="pb-16 md:pb-0">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tracking" element={<Tracking />} />
@@ -72,10 +77,21 @@ function App() {
           <Route path="/refund-cancellation" element={<RefundCancellation />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path='/dashboard/*' element={<Dashboard/>}></Route>
+          <Route path='/verify' element={<Verify/>}></Route>
         </Routes>
       </main>
 
-      <Footer />
+      <div className="md:block">
+        {
+          (pathname.startsWith('/dashboard') ||
+            pathname.startsWith('/login') ||
+            pathname.startsWith('/register') ||
+            pathname.startsWith('/tracking'))
+          ? null 
+          : <Footer />
+        }
+      </div>
       <MobileBottomNav />
       <FloatingChatbot />
     </>
