@@ -668,13 +668,13 @@ export const menuItems = [
     name: "Merchant Earnings",
     isDropdown: true,
     url: 'merchant-earnings',
-    roles: [USER_ROLES.ADMIN],
+    roles: [],
     dropDownOptions: [{
       icon: FaMoneyBillAlt,
       name: "Earning History",
       isDropdown: false,
       url: 'merchant-earnings/history',
-      roles: [USER_ROLES.ADMIN],
+      roles: [],
       component: EarningHistory,
       dropDownOptions: []
     },
@@ -683,7 +683,7 @@ export const menuItems = [
       name: "Earning Redeem Requests",
       isDropdown: false,
       url: 'merchant-earnings/redeem-requests',
-      roles: [USER_ROLES.ADMIN],
+      roles: [],
       component: EarningRedeemHistory,
       dropDownOptions: []
     },
