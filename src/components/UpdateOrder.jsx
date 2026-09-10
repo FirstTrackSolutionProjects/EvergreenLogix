@@ -1366,7 +1366,7 @@ const PickupRequest = ({ setPickup }) => {
               label="Delivery Partner"
             >
               <MenuItem value="">Select Service</MenuItem>
-              <MenuItem value="2">Delhivery (10Kg)</MenuItem>
+              {/* <MenuItem value="2">Delhivery (10Kg)</MenuItem> */}
               <MenuItem value="1">Delhivery (500gm)</MenuItem>
             </Select>
           </FormControl>

@@ -180,8 +180,8 @@ Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-white/80" />
-                    <a href="tel:+911234567890" className="hover:text-emerald-200 transition-colors">
-                      +91 1234567890
+                    <a href="tel:+918433872243" className="hover:text-emerald-200 transition-colors">
+                      +91 8433872243
                     </a>
                   </div>
                   <div className="flex items-center gap-3">
