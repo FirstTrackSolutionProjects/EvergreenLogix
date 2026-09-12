@@ -76,7 +76,7 @@ const Sidebar2 = () => {
           )}
           <ul className="p-4">
             {sidebarItems.map((item) => {
-              if (item.hidden || (item.roles !== undefined && !item.roles.includes(role))) {
+              if (item.hidden || (item.roles !== undefined && !item.roles.includes(role)) || (item.featureSwitchId && !features[item.featureSwitchId])) {
                 return;
               }
               return (<SidebarItem item={item} setShowRecharge={setShowRecharge} toggleSidebar={toggleSidebar} />)
