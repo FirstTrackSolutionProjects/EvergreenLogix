@@ -1303,9 +1303,9 @@ const Card = ({ shipment }) => {
                     <span className="font-semibold">AWB:</span> {shipment.awb}
                   </div>
                 )}
-                {shipment.shipping_vendor_reference_id && (
+                {shipment.lrn && (
                   <div className="text-xs text-gray-600">
-                    <span className="font-semibold">LRN:</span> {shipment.shipping_vendor_reference_id}
+                    <span className="font-semibold">LRN:</span> {shipment.lrn}
                   </div>
                 )}
               </div>

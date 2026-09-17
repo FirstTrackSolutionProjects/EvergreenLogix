@@ -2265,7 +2265,7 @@ const Listing = ({ step, setStep }) => {
                 <div>Pay Method: {params.row.pay_method} {params.row.pay_method === "COD" ? ` - ₹${parseInt(params.row.cod_amount)}` : ''}</div>
                 <div>{`${params.row.service_name}${params.row.public_vendor_service_name ? ` - ${params.row.public_vendor_service_name}` : ''}`}</div>
                 {params.row.awb && <div>AWB: {params.row.awb}</div>}
-                {params.row.shipping_vendor_reference_id && <div>LRN: {params.row.shipping_vendor_reference_id}</div>}
+                {params.row.lrn && <div>LRN: {params.row.lrn}</div>}
               </>
             ) : (
               <div style={{ color: '#666' }}>No shipping details yet</div>
