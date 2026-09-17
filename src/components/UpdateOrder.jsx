@@ -295,8 +295,18 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
       return;
     }
     const invoiceUuid = uuidv4();
-    const key = `invoice/${invoiceUuid}`;
     const filetype = invoice.type;
+    const allowedMimes = ["application/pdf", "image/jpeg", "image/png"]
+    if (!allowedMimes.includes(filetype)){
+      toast.error("Invoice must be a PDF or Image (JPG, PNG)");
+      return;
+    }
+    const mimeToExt = {
+      "application/pdf": ".pdf",
+      "image/jpeg": ".jpg",
+      "image/png": ".png"
+    }
+    const key = `invoice/${invoiceUuid}${mimeToExt[filetype]}`;
 
     const putUrlReq = await fetch(`${API_URL}/s3/putUrl`, {
       method: "POST",
