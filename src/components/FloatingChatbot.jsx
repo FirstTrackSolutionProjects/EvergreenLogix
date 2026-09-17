@@ -378,7 +378,11 @@ const FloatingChatbot = () => {
     if (ticketSubmitting) return;
     if (authLoading) return;
     if (!isAuthenticated) {
-      toast.error("Please log in to raise a ticket.");
+      toast.info("Please log in to raise a ticket.", {
+        icon: "🔐",
+        position: "top-center",
+        autoClose: 2500,
+      });
       navigate("/login");
       setIsOpen(false);
       return;
@@ -402,6 +406,7 @@ const FloatingChatbot = () => {
     };
 
     setTicketSubmitting(true);
+    const submittingToastId = "chatbot-ticket-submitting";
     try {
       const result = await raiseTicketService(payload);
       const ticketId = result?.ticketId;
@@ -414,8 +419,14 @@ const FloatingChatbot = () => {
           : "✅ Ticket created. Our team will reply within 24 hours."
       );
 
+      toast.dismiss(submittingToastId);
       toast.success(
-        ticketId ? `Ticket #${ticketId} created successfully` : "Ticket created"
+        ticketId ? `Ticket #${ticketId} created successfully` : "Ticket created",
+        {
+          icon: "🎫",
+          style: { fontWeight: 600 },
+          toastId: "chatbot-ticket-success",
+        }
       );
       closeTicketFlow();
     } catch (err) {
@@ -424,7 +435,8 @@ const FloatingChatbot = () => {
         typeof err === "string"
           ? err
           : err?.message || "Could not create the ticket. Please try again.";
-      toast.error(msg);
+      toast.dismiss(submittingToastId);
+      toast.error(msg, { icon: "⚠️", toastId: "chatbot-ticket-error" });
       addBotMessage(`⚠️ Sorry, I couldn't create your ticket: ${msg}`);
     } finally {
       setTicketSubmitting(false);

@@ -5,6 +5,116 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Themed react-toastify styling
+   Overrides the default white/red/blue palette with the Evergreen Logix
+   emerald + slate palette used across the site.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --toastify-color-light: #ffffff;
+  --toastify-color-dark: #0f172a;
+  --toastify-color-info: #3b82f6;      /* sky-500    */
+  --toastify-color-success: #10b981;   /* emerald-500 */
+  --toastify-color-warning: #f59e0b;   /* amber-500  */
+  --toastify-color-error: #ef4444;     /* red-500    */
+
+  --toastify-color-progress-light: linear-gradient(
+    90deg,
+    #10b981,
+    #059669
+  );
+  --toastify-color-progress-success: linear-gradient(
+    90deg,
+    #10b981,
+    #059669
+  );
+  --toastify-color-progress-info: linear-gradient(90deg, #3b82f6, #2563eb);
+  --toastify-color-progress-warning: linear-gradient(90deg, #f59e0b, #d97706);
+  --toastify-color-progress-error: linear-gradient(90deg, #ef4444, #dc2626);
+
+  --toastify-font-family: 'Inter', sans-serif;
+  --toastify-toast-min-height: 56px;
+  --toastify-toast-bd-radius: 12px;
+}
+
+/* Card shell */
+.evergreen-toast {
+  border-radius: 12px !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12),
+              0 8px 10px -6px rgba(15, 23, 42, 0.08) !important;
+  padding: 12px 14px !important;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Per-variant left accent bar — subtle, matches site accents */
+.Toastify__toast--success.evergreen-toast {
+  border-left: 4px solid #10b981 !important;
+}
+.Toastify__toast--info.evergreen-toast {
+  border-left: 4px solid #3b82f6 !important;
+}
+.Toastify__toast--warning.evergreen-toast {
+  border-left: 4px solid #f59e0b !important;
+}
+.Toastify__toast--error.evergreen-toast {
+  border-left: 4px solid #ef4444 !important;
+}
+
+/* Icon colours */
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: #059669;
+}
+.Toastify__toast--info .Toastify__toast-icon svg {
+  fill: #2563eb;
+}
+.Toastify__toast--warning .Toastify__toast-icon svg {
+  fill: #d97706;
+}
+.Toastify__toast--error .Toastify__toast-icon svg {
+  fill: #dc2626;
+}
+
+/* Body text */
+.evergreen-toast-body {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Progress bar becomes a slim gradient strip */
+.evergreen-toast-progress {
+  height: 3px !important;
+  border-radius: 0 0 12px 12px !important;
+}
+
+/* Close button — keep it low-contrast until hover */
+.Toastify__close-button {
+  color: #94a3b8 !important;
+  opacity: 0.7;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.Toastify__close-button:hover {
+  color: #475569 !important;
+  opacity: 1;
+}
+
+/* Mobile: full width, small margin, clear of bottom nav */
+@media (max-width: 640px) {
+  .Toastify__toast-container {
+    width: calc(100vw - 16px) !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 84px !important; /* above the mobile bottom nav */
+    top: auto !important;
+  }
+  .evergreen-toast {
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+  }
+}
+
 /* Scroll Animations */
 @keyframes slideUp {
   from {
