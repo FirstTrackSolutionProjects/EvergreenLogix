@@ -36,6 +36,7 @@ import RefundCancellation from "./pages/RefundCancellation";
 import Dashboard from './components/Dashboard';
 import Verify from './pages/Verify';
 import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Home() {
   return (
@@ -58,7 +59,22 @@ function App() {
   const { pathname } = useLocation();
   return (
     <>
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={3500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        limit={4}
+        toastClassName="evergreen-toast"
+        progressClassName="evergreen-toast-progress"
+        bodyClassName="evergreen-toast-body"
+      />
       <ScrollToTop />
       <Navbar />
 

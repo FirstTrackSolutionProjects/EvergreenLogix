@@ -1,6 +1,147 @@
 // src/components/FloatingChatbot.jsx
-import React, { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Minimize2, Maximize2, HelpCircle, Ticket, FileText, User, Mail, Zap } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { MessageCircle, X, Send, Minimize2, Maximize2, HelpCircle, Ticket, FileText, User, Mail, Zap, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
+import { raiseTicketService } from "../services/ticketServices/raiseTicketService";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ticket taxonomy — keep in sync with admin dashboard / backend conventions
+// ─────────────────────────────────────────────────────────────────────────────
+const TICKET_CATEGORIES = [
+  {
+    value: "Order Issue",
+    label: "Order / Shipment Issue",
+    subCategories: [
+      "Cannot create order",
+      "Order stuck in Pending",
+      "Wrong order details",
+      "Label / Invoice not generating",
+      "Other order issue",
+    ],
+    needsOrderId: true,
+  },
+  {
+    value: "Pickup Issue",
+    label: "Pickup Problem",
+    subCategories: [
+      "Pickup not attempted",
+      "Pickup delayed",
+      "Courier refused pickup",
+      "Pickup reschedule needed",
+    ],
+    needsOrderId: true,
+  },
+  {
+    value: "Delivery Issue",
+    label: "Delivery / NDR Issue",
+    subCategories: [
+      "Delivery delayed",
+      "Marked NDR incorrectly",
+      "Customer not reachable",
+      "Reattempt needed",
+      "Address correction needed",
+    ],
+    needsOrderId: true,
+  },
+  {
+    value: "Payment Issue",
+    label: "Payment Issue",
+    subCategories: [
+      "Wallet recharge failed",
+      "Amount debited but not credited",
+      "Double charge",
+      "Refund not received",
+      "COD amount mismatch",
+    ],
+    needsOrderId: false,
+  },
+  {
+    value: "COD Remittance",
+    label: "COD Remittance",
+    subCategories: [
+      "Remittance not received",
+      "Incorrect remittance amount",
+      "UTR / proof not visible",
+      "Remittance stuck in Pending",
+    ],
+    needsOrderId: true,
+  },
+  {
+    value: "Weight Dispute",
+    label: "Weight Dispute",
+    subCategories: [
+      "Charged higher weight",
+      "Dispute not resolved",
+      "Dispute amount incorrect",
+      "Need to raise new dispute",
+    ],
+    needsOrderId: true,
+  },
+  {
+    value: "Refund / Cancellation",
+    label: "Refund / Cancellation",
+    subCategories: [
+      "Cancellation not approved",
+      "Refund not credited",
+      "Cancelled but still shipped",
+      "Need help cancelling",
+    ],
+    needsOrderId: true,
+  },
+  {
+    value: "Warehouse Issue",
+    label: "Warehouse Issue",
+    subCategories: [
+      "Warehouse creation failed",
+      "Wrong warehouse details",
+      "Warehouse not available on a service",
+      "International address update",
+    ],
+    needsOrderId: false,
+  },
+  {
+    value: "Submerchant Issue",
+    label: "Submerchant Issue",
+    subCategories: [
+      "Submerchant request pending",
+      "Margin not updating",
+      "Submerchant not able to log in",
+      "COD / earnings visibility",
+    ],
+    needsOrderId: false,
+  },
+  {
+    value: "KYC / Verification",
+    label: "KYC / Verification",
+    subCategories: [
+      "Verification rejected",
+      "Document upload failed",
+      "Verification taking too long",
+      "Need to update profile",
+    ],
+    needsOrderId: false,
+  },
+  {
+    value: "Technical Issue",
+    label: "Technical / Bug",
+    subCategories: [
+      "Website not loading",
+      "Login / OTP problem",
+      "Dashboard error",
+      "Bulk upload failing",
+      "Report export failing",
+    ],
+    needsOrderId: false,
+  },
+  {
+    value: "Other",
+    label: "Something else",
+    subCategories: ["General enquiry", "Feedback", "Feature request", "Other"],
+    needsOrderId: false,
+  },
+];
 
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,14 +157,28 @@ const FloatingChatbot = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showTicketForm, setShowTicketForm] = useState(false);
+  const [ticketStep, setTicketStep] = useState(0); // 0..4 wizard
+  const [ticketSubmitting, setTicketSubmitting] = useState(false);
   const [ticketData, setTicketData] = useState({
-    name: "",
-    email: "",
-    subject: "",
+    category: "",
+    subCategory: "",
+    orderId: "",
+    orderIdSkipped: false,
     description: "",
   });
+  const [ticketErrors, setTicketErrors] = useState({});
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  const { isAuthenticated, authLoading, name: authName, email: authEmail } = useAuth();
+  const navigate = useNavigate();
+
+  const selectedCategory = TICKET_CATEGORIES.find(
+    (c) => c.value === ticketData.category
+  );
+  const needsOrderId = Boolean(selectedCategory?.needsOrderId);
+  const ticketTotalSteps = needsOrderId ? 4 : 3;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,6 +193,18 @@ const FloatingChatbot = () => {
       inputRef.current?.focus();
     }
   }, [isOpen, isMinimized]);
+
+  const resetTicket = () => {
+    setTicketData({
+      category: "",
+      subCategory: "",
+      orderId: "",
+      orderIdSkipped: false,
+      description: "",
+    });
+    setTicketErrors({});
+    setTicketStep(0);
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -105,8 +272,9 @@ const FloatingChatbot = () => {
     }
     
     if (lower.includes("ticket") || lower.includes("raise") || lower.includes("issue") || lower.includes("problem")) {
-      setShowTicketForm(true);
-      return "🎫 I'll help you raise a support ticket. Please fill out the form below with your details and issue description. Our team will respond within 24 hours.";
+      // Defer so the message renders first, then open the form (or login redirect)
+      setTimeout(() => openTicketFlow(), 100);
+      return "🎫 I'll help you raise a support ticket. Please pick a category below so we can route it to the right team.";
     }
     
     if (lower.includes("hello") || lower.includes("hi") || lower.includes("hey")) {
@@ -120,25 +288,165 @@ const FloatingChatbot = () => {
     return "🌿 Thank you for reaching out to Evergreen Logix. I'm here to help with tracking, pricing, bookings, and support. Could you please provide more details about what you need?";
   };
 
-  const handleTicketSubmit = (e) => {
-    e.preventDefault();
-    if (!ticketData.name || !ticketData.email || !ticketData.subject || !ticketData.description) {
-      alert("Please fill in all fields");
-      return;
-    }
-
+  const addBotMessage = (text) => {
     setMessages((prev) => [
       ...prev,
       {
-        id: prev.length + 1,
+        id: prev.length + 1 + Math.random(),
         type: "bot",
-        text: `✅ Thank you for raising a ticket, ${ticketData.name}! We've received your issue and will get back to you within 24 hours. Ticket ID: #T${Math.floor(100000 + Math.random() * 900000)}`,
+        text,
         timestamp: new Date(),
       },
     ]);
+  };
 
-    setTicketData({ name: "", email: "", subject: "", description: "" });
+  const openTicketFlow = () => {
+    if (authLoading) {
+      addBotMessage("⏳ One moment — I'm confirming your session…");
+      return;
+    }
+    if (!isAuthenticated) {
+      addBotMessage(
+        "🔐 To raise a support ticket, please log in first so we can link it to your account. Redirecting you to login now…"
+      );
+      setTimeout(() => {
+        navigate("/login");
+        setIsOpen(false);
+      }, 1200);
+      return;
+    }
+    resetTicket();
+    setShowTicketForm(true);
+  };
+
+  const closeTicketFlow = () => {
     setShowTicketForm(false);
+    resetTicket();
+  };
+
+  // ─── Wizard step validation ────────────────────────────────────────────────
+  const validateTicketStep = () => {
+    const errs = {};
+    if (ticketStep === 0) {
+      if (!ticketData.category) errs.category = "Please choose a category";
+    } else if (ticketStep === 1) {
+      if (!ticketData.subCategory) errs.subCategory = "Please choose a sub-category";
+    } else if (ticketStep === 2 && needsOrderId) {
+      const raw = (ticketData.orderId || "").trim();
+      if (!ticketData.orderIdSkipped && !raw) {
+        errs.orderId = "Enter the order ID or tick 'I don't have it'";
+      } else if (!ticketData.orderIdSkipped && raw.length < 3) {
+        errs.orderId = "That doesn't look like a valid order ID";
+      }
+    } else if (
+      (ticketStep === 3 && needsOrderId) ||
+      (ticketStep === 2 && !needsOrderId)
+    ) {
+      const desc = (ticketData.description || "").trim();
+      if (!desc) errs.description = "Please describe the issue";
+      else if (desc.length < 20)
+        errs.description = "Please add a bit more detail (at least 20 characters)";
+      else if (desc.length > 2000)
+        errs.description = "Please keep it under 2000 characters";
+    }
+    setTicketErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const isLastStep =
+    (needsOrderId && ticketStep === 3) || (!needsOrderId && ticketStep === 2);
+
+  const handleNext = () => {
+    if (!validateTicketStep()) return;
+    if (isLastStep) {
+      handleSubmitTicket();
+    } else {
+      setTicketStep((s) => s + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (ticketStep === 0) {
+      closeTicketFlow();
+      return;
+    }
+    setTicketStep((s) => s - 1);
+    setTicketErrors({});
+  };
+
+  const handleSubmitTicket = async () => {
+    if (ticketSubmitting) return;
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      toast.info("Please log in to raise a ticket.", {
+        icon: "🔐",
+        position: "top-center",
+        autoClose: 2500,
+      });
+      navigate("/login");
+      setIsOpen(false);
+      return;
+    }
+
+    const orderIdForPayload =
+      needsOrderId && !ticketData.orderIdSkipped && ticketData.orderId.trim()
+        ? ticketData.orderId.trim()
+        : null;
+
+    // Reporter info comes from the backend via req.user — we just echo it here
+    const reporterLine = authName
+      ? `Reporter: ${authName}${authEmail ? ` <${authEmail}>` : ""}\n`
+      : "";
+
+    const payload = {
+      category: ticketData.category,
+      subCategory: ticketData.subCategory || null,
+      description: `[Raised via Chatbot]\n${reporterLine}\n${ticketData.description.trim()}`,
+      orderId: orderIdForPayload,
+    };
+
+    setTicketSubmitting(true);
+    const submittingToastId = "chatbot-ticket-submitting";
+    try {
+      const result = await raiseTicketService(payload);
+      const ticketId = result?.ticketId;
+
+      addBotMessage(
+        ticketId
+          ? `✅ Ticket #${ticketId} created under "${ticketData.category}"${
+              ticketData.subCategory ? ` → ${ticketData.subCategory}` : ""
+            }${orderIdForPayload ? ` for order ${orderIdForPayload}` : ""}. Our team will reply within 24 hours. You can track it here: /dashboard/support/${ticketId}`
+          : "✅ Ticket created. Our team will reply within 24 hours."
+      );
+
+      toast.dismiss(submittingToastId);
+      toast.success(
+        ticketId ? `Ticket #${ticketId} created successfully` : "Ticket created",
+        {
+          icon: "🎫",
+          style: { fontWeight: 600 },
+          toastId: "chatbot-ticket-success",
+        }
+      );
+      closeTicketFlow();
+    } catch (err) {
+      console.error("Chatbot ticket submit failed:", err);
+      const msg =
+        typeof err === "string"
+          ? err
+          : err?.message || "Could not create the ticket. Please try again.";
+      toast.dismiss(submittingToastId);
+      toast.error(msg, { icon: "⚠️", toastId: "chatbot-ticket-error" });
+      addBotMessage(`⚠️ Sorry, I couldn't create your ticket: ${msg}`);
+    } finally {
+      setTicketSubmitting(false);
+    }
+  };
+
+  // Keeps the outer <form onSubmit> from triggering a page reload
+  const handleTicketFormSubmit = (e) => {
+    e.preventDefault();
+    handleNext();
   };
 
   const handleKeyPress = (e) => {
@@ -193,7 +501,10 @@ const FloatingChatbot = () => {
                 {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
               </button>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  closeTicketFlow();
+                }}
                 className="text-white/70 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
               >
                 <X size={18} />
@@ -267,56 +578,189 @@ const FloatingChatbot = () => {
                   🚚 Pickup
                 </button>
                 <button
-                  onClick={() => setInput("Raise a ticket")}
+                  onClick={() => {
+                    if (isAuthenticated) openTicketFlow();
+                    else setInput("Raise a ticket");
+                  }}
                   className="flex-shrink-0 text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-full transition-colors"
                 >
                   🎫 Ticket
                 </button>
               </div>
 
-              {/* Ticket Form */}
+              {/* Ticket Wizard */}
               {showTicketForm && (
                 <div className="px-4 py-3 bg-white border-t border-gray-200">
-                  <form onSubmit={handleTicketSubmit} className="space-y-2">
+                  <form onSubmit={handleTicketFormSubmit} className="space-y-3">
+                    {/* Header */}
                     <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm">
                       <Ticket size={16} />
                       <span>Raise a Ticket</span>
+                      <span className="ml-auto text-[10px] text-gray-400">
+                        Step {ticketStep + 1} of {ticketTotalSteps}
+                      </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="text"
-                        placeholder="Your Name"
-                        value={ticketData.name}
-                        onChange={(e) => setTicketData({ ...ticketData, name: e.target.value })}
-                        className="text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Your Email"
-                        value={ticketData.email}
-                        onChange={(e) => setTicketData({ ...ticketData, email: e.target.value })}
-                        className="text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none"
-                      />
+
+                    {/* Reporter line (read-only) */}
+                    {authName && (
+                      <div className="text-[10px] text-gray-500 bg-gray-50 border border-gray-100 rounded-md px-2 py-1">
+                        Filing as <span className="font-semibold text-gray-700">{authName}</span>
+                        {authEmail ? ` <${authEmail}>` : ""}
+                      </div>
+                    )}
+
+                    {/* Step 0 — Category */}
+                    {ticketStep === 0 && (
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          What is this about?
+                        </label>
+                        <select
+                          value={ticketData.category}
+                          onChange={(e) => {
+                            setTicketData({
+                              ...ticketData,
+                              category: e.target.value,
+                              subCategory: "",
+                            });
+                            setTicketErrors({});
+                          }}
+                          className="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none bg-white"
+                        >
+                          <option value="">-- Select a category --</option>
+                          {TICKET_CATEGORIES.map((c) => (
+                            <option key={c.value} value={c.value}>
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+                        {ticketErrors.category && (
+                          <p className="text-[10px] text-red-500 mt-1">{ticketErrors.category}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Step 1 — Sub-category */}
+                    {ticketStep === 1 && selectedCategory && (
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Pick the closest match
+                        </label>
+                        <select
+                          value={ticketData.subCategory}
+                          onChange={(e) => {
+                            setTicketData({ ...ticketData, subCategory: e.target.value });
+                            setTicketErrors({});
+                          }}
+                          className="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none bg-white"
+                        >
+                          <option value="">-- Select sub-category --</option>
+                          {selectedCategory.subCategories.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                        {ticketErrors.subCategory && (
+                          <p className="text-[10px] text-red-500 mt-1">{ticketErrors.subCategory}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Step 2 — Order ID (conditional) */}
+                    {ticketStep === 2 && needsOrderId && (
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Order ID (e.g. EGLXD1234)
+                        </label>
+                        <input
+                          type="text"
+                          disabled={ticketData.orderIdSkipped}
+                          value={ticketData.orderId}
+                          onChange={(e) => {
+                            setTicketData({ ...ticketData, orderId: e.target.value });
+                            setTicketErrors({});
+                          }}
+                          placeholder={ticketData.orderIdSkipped ? "Skipped" : "EGLXD1234"}
+                          className="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                        />
+                        <label className="flex items-center gap-2 mt-2 text-[10px] text-gray-500 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={ticketData.orderIdSkipped}
+                            onChange={(e) => {
+                              setTicketData({
+                                ...ticketData,
+                                orderIdSkipped: e.target.checked,
+                                orderId: e.target.checked ? "" : ticketData.orderId,
+                              });
+                              setTicketErrors({});
+                            }}
+                          />
+                          I don't have the order ID right now
+                        </label>
+                        {ticketErrors.orderId && (
+                          <p className="text-[10px] text-red-500 mt-1">{ticketErrors.orderId}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Description step (last) */}
+                    {isLastStep && (
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Describe the issue
+                        </label>
+                        <textarea
+                          value={ticketData.description}
+                          onChange={(e) => {
+                            setTicketData({ ...ticketData, description: e.target.value });
+                            setTicketErrors({});
+                          }}
+                          placeholder="Tell us what happened, any error messages, etc. (min 20 chars)"
+                          className="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none resize-none h-20"
+                          maxLength={2000}
+                        />
+                        <div className="flex justify-between text-[10px] mt-1">
+                          {ticketErrors.description ? (
+                            <span className="text-red-500">{ticketErrors.description}</span>
+                          ) : (
+                            <span className="text-gray-400">&nbsp;</span>
+                          )}
+                          <span className="text-gray-400">
+                            {ticketData.description.length}/2000
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nav buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleBack}
+                        disabled={ticketSubmitting}
+                        className="flex-1 flex items-center justify-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold py-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                      >
+                        <ChevronLeft size={14} />
+                        {ticketStep === 0 ? "Cancel" : "Back"}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={ticketSubmitting}
+                        className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${
+                          ticketSubmitting
+                            ? "bg-emerald-300 text-white cursor-not-allowed"
+                            : "bg-emerald-500 text-white hover:bg-emerald-600"
+                        }`}
+                      >
+                        {ticketSubmitting
+                          ? "Submitting…"
+                          : isLastStep
+                          ? "Submit Ticket"
+                          : "Next"}
+                      </button>
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Subject"
-                      value={ticketData.subject}
-                      onChange={(e) => setTicketData({ ...ticketData, subject: e.target.value })}
-                      className="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none"
-                    />
-                    <textarea
-                      placeholder="Describe your issue..."
-                      value={ticketData.description}
-                      onChange={(e) => setTicketData({ ...ticketData, description: e.target.value })}
-                      className="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none resize-none h-12"
-                    />
-                    <button
-                      type="submit"
-                      className="w-full bg-emerald-500 text-white text-xs font-semibold py-2 rounded-lg hover:bg-emerald-600 transition-colors"
-                    >
-                      Submit Ticket
-                    </button>
                   </form>
                 </div>
               )}
