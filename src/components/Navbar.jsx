@@ -4,13 +4,18 @@ import { AiOutlineMenu } from 'react-icons/ai';
 import { IoMdClose } from 'react-icons/io';
 import { Link, useLocation, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaDoorOpen, FaWallet } from 'react-icons/fa';
+import { FaDoorOpen, FaWallet, FaChevronDown } from 'react-icons/fa';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 import WalletRechargeModal from './WalletRechargeModal';
 import getAvailableRoles from '../services/roleServices/getAvailableRoles';
 import changeRoleService from '../services/roleServices/changeRoleService';
 import getWalletBalanceService from '@/services/walletServices/getWalletBalanceService';
+import { QRCodeCanvas } from 'qrcode.react';
+
+const CARGO_WEBSITE_URL = 'https://cargo.evergreenlogix.com/';
+const CARGO_APK_URL =
+  'https://evergreen-logix-cargo-artifacts.s3.ap-south-1.amazonaws.com/delivery-partner-app/v1.0.0/evergreen-logix-cargo-delivery-partner-v1.0.0.apk';
 
 const Navbar = () => {
   const location = useLocation();
@@ -20,19 +25,39 @@ const Navbar = () => {
   const [showCreditDetails, setShowCreditDetails] = useState(false);
   const creditDetailsRef = useRef(null);
 
+  // ── Cargo dropdown state ───────────────────────────────────────
+  const [cargoDropdownOpen, setCargoDropdownOpen] = useState(false);
+  const cargoDropdownRef = useRef(null);
+
   // Lock body scroll when mobile sidebar is open
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? 'hidden' : 'unset';
-    return () => { document.body.style.overflow = 'unset'; };
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isSidebarOpen]);
 
+  // Close cargo dropdown on outside click
+  useEffect(() => {
+    if (!cargoDropdownOpen) return;
+    const onMouseDown = (e) => {
+      if (
+        cargoDropdownRef.current &&
+        !cargoDropdownRef.current.contains(e.target)
+      ) {
+        setCargoDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, [cargoDropdownOpen]);
+
+  // ── Public nav links (removed ABOUT and BLOGS) ─────────────────
   const navLinks = [
-    { name: 'HOME',     path: '/' },
+    { name: 'HOME', path: '/' },
     { name: 'TRACKING', path: '/tracking' },
-    { name: 'BLOGS',    path: '/blogs' },
-    { name: 'PRICING',  path: '/pricing' },
-    { name: 'ABOUT',    path: '/about' },
-    { name: 'CONTACT',  path: '/contact' },
+    { name: 'PRICING', path: '/pricing' },
+    { name: 'CONTACT', path: '/contact' },
   ];
 
   const closeRechargeModal = () => setShowRecharge(false);
@@ -67,31 +92,39 @@ const Navbar = () => {
       }
     };
     fetchRoles();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [isAuthenticated]);
 
   const shouldShowRoleSwitcher = useMemo(
-    () => isAuthenticated && Array.isArray(availableRoles) && availableRoles.length > 1,
+    () =>
+      isAuthenticated &&
+      Array.isArray(availableRoles) &&
+      availableRoles.length > 1,
     [isAuthenticated, availableRoles]
   );
 
-  // Close role dropdown on outside click
   useEffect(() => {
     if (!roleMenuOpen) return;
     const onMouseDown = (e) => {
-      const clickedInDesktop = roleDropdownDesktopRef.current?.contains(e.target);
-      const clickedInMobile  = roleDropdownMobileRef.current?.contains(e.target);
+      const clickedInDesktop = roleDropdownDesktopRef.current?.contains(
+        e.target
+      );
+      const clickedInMobile = roleDropdownMobileRef.current?.contains(
+        e.target
+      );
       if (!clickedInDesktop && !clickedInMobile) setRoleMenuOpen(false);
     };
     document.addEventListener('mousedown', onMouseDown);
     return () => document.removeEventListener('mousedown', onMouseDown);
   }, [roleMenuOpen]);
 
-  // Close credit details on outside click
   useEffect(() => {
     if (!showCreditDetails) return;
     const onMouseDown = (e) => {
-      if (!creditDetailsRef.current?.contains(e.target)) setShowCreditDetails(false);
+      if (!creditDetailsRef.current?.contains(e.target))
+        setShowCreditDetails(false);
     };
     document.addEventListener('mousedown', onMouseDown);
     return () => document.removeEventListener('mousedown', onMouseDown);
@@ -102,7 +135,10 @@ const Navbar = () => {
       const nextUserRoleId = nextRole?.user_role_id;
       if (!nextUserRoleId) throw new Error('Invalid role');
       if (switchingRoleId) return;
-      if (String(nextRole?.role || '').toUpperCase() === String(role || '').toUpperCase()) {
+      if (
+        String(nextRole?.role || '').toUpperCase() ===
+        String(role || '').toUpperCase()
+      ) {
         setRoleMenuOpen(false);
         return;
       }
@@ -129,28 +165,38 @@ const Navbar = () => {
           disabled={rolesLoading}
           title={role ? `Current role: ${role}` : 'Switch role'}
         >
-          <span className="truncate">{role ? `Role: ${role}` : 'Switch Role'}</span>
+          <span className="truncate">
+            {role ? `Role: ${role}` : 'Switch Role'}
+          </span>
           <span className="ml-2">▾</span>
         </button>
 
         {roleMenuOpen && (
           <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
             {availableRoles.map((r) => {
-              const isActive = String(r?.role || '').toUpperCase() === String(role || '').toUpperCase();
-              const isBusy  = switchingRoleId === r?.user_role_id;
+              const isActive =
+                String(r?.role || '').toUpperCase() ===
+                String(role || '').toUpperCase();
+              const isBusy = switchingRoleId === r?.user_role_id;
               return (
                 <button
                   key={r?.user_role_id}
                   type="button"
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-emerald-50
                     ${isActive ? 'bg-emerald-50 font-medium' : ''}
-                    ${switchingRoleId && !isBusy ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    ${
+                      switchingRoleId && !isBusy
+                        ? 'opacity-60 cursor-not-allowed'
+                        : ''
+                    }`}
                   onClick={() => handleSwitchRole(r)}
                   disabled={Boolean(switchingRoleId) || isActive}
                 >
                   <div className="flex items-center justify-between">
                     <span className="truncate">{r?.role}</span>
-                    {isBusy && <span className="text-xs text-gray-500">Switching…</span>}
+                    {isBusy && (
+                      <span className="text-xs text-gray-500">Switching…</span>
+                    )}
                   </div>
                 </button>
               );
@@ -160,6 +206,76 @@ const Navbar = () => {
       </div>
     );
   };
+
+  // ── Cargo Dropdown (Desktop) ───────────────────────────────────
+  const CargoDropdown = () => (
+    <div className="relative" ref={cargoDropdownRef}>
+      <button
+        type="button"
+        onClick={() => setCargoDropdownOpen((o) => !o)}
+        className="relative font-medium py-2 px-1 text-gray-700 hover:text-emerald-600 transition-colors duration-200 flex items-center gap-1"
+        aria-haspopup="true"
+        aria-expanded={cargoDropdownOpen}
+      >
+        EVERGREENLOGIX CARGO
+        <FaChevronDown
+          size={10}
+          className={`transition-transform duration-200 ${
+            cargoDropdownOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {cargoDropdownOpen && (
+        <div className="absolute right-0 mt-2 w-[340px] bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          {/* Option 1 — Visit website */}
+          <a
+            href={CARGO_WEBSITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setCargoDropdownOpen(false)}
+            className="flex items-start gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors border-b border-gray-100"
+          >
+            <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <span className="text-emerald-700 font-bold text-sm">EG</span>
+            </div>
+            <div className="min-w-0">
+              <div className="font-semibold text-gray-900 text-sm">
+                Visit EvergreenLogix Cargo
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                cargo.evergreenlogix.com
+              </div>
+            </div>
+          </a>
+
+          {/* Option 2 — Download APK + QR */}
+          <div className="px-4 py-4 bg-gray-50">
+            <div className="font-semibold text-gray-900 text-sm mb-1">
+              Delivery Partner App
+            </div>
+            <div className="text-xs text-gray-500 mb-3">
+              Scan the QR with your phone or tap download below
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="bg-white p-2 rounded-lg border border-gray-200 flex-shrink-0">
+                <QRCodeCanvas value={CARGO_APK_URL} size={92} level="M" />
+              </div>
+              <a
+                href={CARGO_APK_URL}
+                download
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200 hover:scale-[1.02] w-full"
+                onClick={() => setCargoDropdownOpen(false)}
+              >
+                ⬇ Download APK
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   // ── Wallet ─────────────────────────────────────────────────────
   const INITIAL_WALLET_DATA = {
@@ -187,25 +303,28 @@ const Navbar = () => {
 
   const formatBalance = (value) => parseFloat(value).toFixed(2);
 
-  // ── NavLink style helpers ──────────────────────────────────────
   const getNavLinkClass = ({ isActive }) =>
     `relative font-medium py-2 px-1 text-gray-700 hover:text-emerald-600 transition-colors duration-200
-     ${isActive
-       ? 'text-emerald-700 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-full after:h-[3px] after:bg-emerald-700 after:rounded-full after:transition-all after:duration-300 after:scale-x-100'
-       : 'after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 hover:after:w-full after:h-[3px] after:bg-emerald-700 after:rounded-full after:transition-all after:duration-300'}`;
+     ${
+       isActive
+         ? 'text-emerald-700 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-full after:h-[3px] after:bg-emerald-700 after:rounded-full after:transition-all after:duration-300 after:scale-x-100'
+         : 'after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 hover:after:w-full after:h-[3px] after:bg-emerald-700 after:rounded-full after:transition-all after:duration-300'
+     }`;
 
   const getMobileNavLinkClass = ({ isActive }) =>
     `block py-2 px-4 rounded-lg hover:bg-emerald-100 transition-colors duration-200
-     ${isActive ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-gray-700'}`;
+     ${
+       isActive
+         ? 'bg-emerald-50 text-emerald-700 font-semibold'
+         : 'text-gray-700'
+     }`;
 
-  // ── Render ─────────────────────────────────────────────────────
   return (
     <>
       {showRecharge && <WalletRechargeModal onClose={closeRechargeModal} />}
 
       <header className="bg-white shadow-sm w-full font-inter sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center py-2 md:py-3">
-
           {/* Logo */}
           <Link to="/" className="flex items-center shrink-0 mr-1 sm:mr-4">
             <img
@@ -214,92 +333,123 @@ const Navbar = () => {
               className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg"
             />
             <span className="text-sm sm:text-xl md:text-2xl font-extrabold ml-1.5 sm:ml-2 text-gray-800 whitespace-nowrap">
-              Evergreen <span className="text-emerald-600 min-[380px]:inline">Logix</span>
+              Evergreen{' '}
+              <span className="text-emerald-600 min-[380px]:inline">Logix</span>
             </span>
           </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex grow justify-center min-w-0">
-            <div className="flex flex-wrap justify-center md:space-x-4 lg:space-x-8 text-base">
+            <div className="flex flex-wrap justify-center md:space-x-4 lg:space-x-8 text-base items-center">
               {navLinks.map((link) => (
-                <NavLink key={link.path} to={link.path} className={getNavLinkClass}>
+                <NavLink
+                  key={link.path}
+                  to={link.path}
+                  className={getNavLinkClass}
+                >
                   {link.name}
                 </NavLink>
               ))}
+              <CargoDropdown />
             </div>
           </nav>
 
           {/* Right section */}
           <div className="flex items-center space-x-1 sm:space-x-4 shrink-0 min-w-0 ml-auto">
-
             {/* Wallet — only on dashboard */}
-            {isAuthenticated && verified && location.pathname.startsWith('/dashboard') && (
-              <div className="shrink-0 flex flex-col gap-1">
-                {/* Wallet balance */}
-                <div
-                  title="Wallet Balance"
-                  onClick={() => setShowRecharge(true)}
-                  aria-label={`Current balance: ₹${formatBalance(walletData.balance)}. Click to recharge.`}
-                  className={`relative bg-indigo-600 text-white flex items-center font-semibold rounded-full
+            {isAuthenticated &&
+              verified &&
+              location.pathname.startsWith('/dashboard') && (
+                <div className="shrink-0 flex flex-col gap-1">
+                  <div
+                    title="Wallet Balance"
+                    onClick={() => setShowRecharge(true)}
+                    aria-label={`Current balance: ₹${formatBalance(
+                      walletData.balance
+                    )}. Click to recharge.`}
+                    className={`relative bg-indigo-600 text-white flex items-center font-semibold rounded-full
                     px-2 py-0 sm:px-3 sm:py-0 md:px-4 md:py-0
                     text-xs sm:text-sm md:text-base cursor-pointer transition-all duration-200 shadow-sm whitespace-nowrap
-                    ${walletData.balance < 250 ? 'ring-2 ring-red-500 ring-offset-1 bg-red-500' : 'hover:scale-105'}`}
-                >
-                  <FaWallet className="mr-1 md:mr-2 text-xs sm:text-sm md:text-lg" />
-                  <p className="flex items-center">
-                    <span className="hidden min-[420px]:inline mr-0.5">₹</span>
-                    {formatBalance(walletData.balance)}
-                  </p>
-                  {walletData.balance < 250 && (
-                    <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 flex items-center justify-center text-xs font-bold animate-pulse">
-                      !
-                    </span>
-                  )}
-                </div>
-
-                {/* Credit balance */}
-                {(walletData.creditLimit > 0 || walletData.credits !== 0) && (
-                  <div className="relative" ref={creditDetailsRef}>
-                    <div
-                      title="Credit Balance"
-                      onClick={() => setShowCreditDetails((v) => !v)}
-                      aria-label={`Current credit balance: ₹${formatBalance(walletData.credits)}. Click for details.`}
-                      className={`relative bg-indigo-600 text-white flex items-center font-semibold rounded-full
-                        px-2 py-0 sm:px-3 sm:py-0 md:px-4 md:py-0
-                        text-xs sm:text-sm md:text-base cursor-pointer transition-all duration-200 shadow-sm whitespace-nowrap
-                        ${walletData.credits < 250 ? 'ring-2 ring-red-500 ring-offset-1 bg-red-500' : 'hover:scale-105'}`}
-                    >
-                      <FaIndianRupeeSign className="mr-1 md:mr-2 text-xs sm:text-sm md:text-lg" />
-                      <p className="flex items-center">
-                        <span className="hidden min-[420px]:inline mr-0.5">₹</span>
-                        {formatBalance(walletData.credits)}
-                      </p>
-                      {walletData.credits < 250 && (
-                        <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 flex items-center justify-center text-xs font-bold animate-pulse">
-                          !
-                        </span>
-                      )}
-                    </div>
-
-                    {showCreditDetails && (
-                      <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-3 text-sm text-gray-700 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-500 font-medium">Credit Limit</span>
-                          <span className="font-semibold text-indigo-700">₹{formatBalance(walletData.creditLimit)}</span>
-                        </div>
-                        <div className="border-t border-gray-100" />
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-500 font-medium">Used Amount</span>
-                          <span className={`font-semibold ${walletData.outstandingCredits > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                            ₹{formatBalance(walletData.outstandingCredits)}
-                          </span>
-                        </div>
-                      </div>
+                    ${
+                      walletData.balance < 250
+                        ? 'ring-2 ring-red-500 ring-offset-1 bg-red-500'
+                        : 'hover:scale-105'
+                    }`}
+                  >
+                    <FaWallet className="mr-1 md:mr-2 text-xs sm:text-sm md:text-lg" />
+                    <p className="flex items-center">
+                      <span className="hidden min-[420px]:inline mr-0.5">₹</span>
+                      {formatBalance(walletData.balance)}
+                    </p>
+                    {walletData.balance < 250 && (
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 flex items-center justify-center text-xs font-bold animate-pulse">
+                        !
+                      </span>
                     )}
                   </div>
-                )}
-              </div>
-            )}
+
+                  {(walletData.creditLimit > 0 || walletData.credits !== 0) && (
+                    <div className="relative" ref={creditDetailsRef}>
+                      <div
+                        title="Credit Balance"
+                        onClick={() => setShowCreditDetails((v) => !v)}
+                        aria-label={`Current credit balance: ₹${formatBalance(
+                          walletData.credits
+                        )}. Click for details.`}
+                        className={`relative bg-indigo-600 text-white flex items-center font-semibold rounded-full
+                        px-2 py-0 sm:px-3 sm:py-0 md:px-4 md:py-0
+                        text-xs sm:text-sm md:text-base cursor-pointer transition-all duration-200 shadow-sm whitespace-nowrap
+                        ${
+                          walletData.credits < 250
+                            ? 'ring-2 ring-red-500 ring-offset-1 bg-red-500'
+                            : 'hover:scale-105'
+                        }`}
+                      >
+                        <FaIndianRupeeSign className="mr-1 md:mr-2 text-xs sm:text-sm md:text-lg" />
+                        <p className="flex items-center">
+                          <span className="hidden min-[420px]:inline mr-0.5">
+                            ₹
+                          </span>
+                          {formatBalance(walletData.credits)}
+                        </p>
+                        {walletData.credits < 250 && (
+                          <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 flex items-center justify-center text-xs font-bold animate-pulse">
+                            !
+                          </span>
+                        )}
+                      </div>
+
+                      {showCreditDetails && (
+                        <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-3 text-sm text-gray-700 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-500 font-medium">
+                              Credit Limit
+                            </span>
+                            <span className="font-semibold text-indigo-700">
+                              ₹{formatBalance(walletData.creditLimit)}
+                            </span>
+                          </div>
+                          <div className="border-t border-gray-100" />
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-500 font-medium">
+                              Used Amount
+                            </span>
+                            <span
+                              className={`font-semibold ${
+                                walletData.outstandingCredits > 0
+                                  ? 'text-red-500'
+                                  : 'text-emerald-600'
+                              }`}
+                            >
+                              ₹{formatBalance(walletData.outstandingCredits)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
             {/* Desktop: user name + role switcher + logout */}
             {isAuthenticated && (
@@ -348,7 +498,6 @@ const Navbar = () => {
             isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
           } transition-transform duration-300 ease-in-out md:hidden flex flex-col`}
         >
-          {/* Sidebar header */}
           <div className="p-4 flex justify-between items-center border-b shrink-0">
             <span className="text-lg font-bold text-emerald-700">MENU</span>
             <button
@@ -367,11 +516,16 @@ const Navbar = () => {
                   <div className="flex items-center justify-between">
                     <div className="min-w-0">
                       <p className="text-sm text-gray-500">Welcome,</p>
-                      <p className="font-bold text-xl truncate text-gray-800">{name}</p>
+                      <p className="font-bold text-xl truncate text-gray-800">
+                        {name}
+                      </p>
                     </div>
                     <button
                       className="bg-red-500 text-white p-2.5 rounded-lg shadow-sm active:scale-95 transition-all"
-                      onClick={() => { logout(); setIsSidebarOpen(false); }}
+                      onClick={() => {
+                        logout();
+                        setIsSidebarOpen(false);
+                      }}
                       aria-label="Logout"
                     >
                       <FaDoorOpen size={20} />
@@ -411,6 +565,18 @@ const Navbar = () => {
                   {link.name}
                 </NavLink>
               ))}
+
+              {/* ── EvergreenLogix Cargo (mobile) ─────────────── */}
+              <a
+                href={CARGO_WEBSITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsSidebarOpen(false)}
+                className="block py-2 px-4 rounded-lg hover:bg-emerald-100 transition-colors duration-200 text-gray-700 font-semibold"
+              >
+                EVERGREENLOGIX CARGO ↗
+              </a>
+
               {isAuthenticated && verified && (
                 <NavLink
                   to="/dashboard"
@@ -422,7 +588,10 @@ const Navbar = () => {
               )}
               {isAuthenticated && (
                 <button
-                  onClick={() => { logout(); setIsSidebarOpen(false); }}
+                  onClick={() => {
+                    logout();
+                    setIsSidebarOpen(false);
+                  }}
                   className="w-full text-left py-2 px-4 rounded-lg text-red-600 hover:bg-red-50 transition-colors duration-200 font-bold"
                 >
                   LOGOUT
@@ -431,7 +600,6 @@ const Navbar = () => {
             </nav>
           </div>
 
-          {/* Sidebar footer */}
           <div className="p-4 border-t text-center text-xs text-gray-400">
             © {new Date().getFullYear()} Evergreen Logix
           </div>
