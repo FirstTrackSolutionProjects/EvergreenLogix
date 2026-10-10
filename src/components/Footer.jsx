@@ -1,22 +1,165 @@
 // src/components/Footer.jsx
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { MapPin, Phone, Mail, ArrowUp } from 'lucide-react';
 import {
-  MapPin,
-  Phone,
-  Mail,
-  ArrowUp,
-} from "lucide-react";
-import { 
   FaFacebook,
   FaTwitter,
   FaInstagram,
   FaLinkedin,
-} from "react-icons/fa";
+} from 'react-icons/fa';
+import { QRCodeCanvas } from 'qrcode.react';
+
+const CARGO_APK_URL =
+  'https://evergreen-logix-cargo-artifacts.s3.ap-south-1.amazonaws.com/delivery-partner-app/v1.0.0/evergreen-logix-cargo-delivery-partner-v1.0.0.apk';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Local icon helpers (so Footer doesn't depend on Navbar exports)
+// ─────────────────────────────────────────────────────────────────────────────
+const DownloadIcon = ({ className = 'w-4 h-4' }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className={className}
+  >
+    <path d="M12 3v12" />
+    <path d="m7 10 5 5 5-5" />
+    <path d="M5 21h14" />
+  </svg>
+);
+
+const CheckIcon = ({ className = 'w-4 h-4' }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className={className}
+  >
+    <path d="m5 12 5 5L20 7" />
+  </svg>
+);
+
+const Spinner = ({ className = 'w-4 h-4' }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+    className={`animate-spin ${className}`}
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      stroke="currentColor"
+      strokeOpacity="0.25"
+      strokeWidth="3"
+    />
+    <path
+      d="M21 12a9 9 0 0 0-9-9"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reusable APK download button with press + loading feedback
+// ─────────────────────────────────────────────────────────────────────────────
+const ApkDownloadButton = ({ href, size = 'sm', onClick, label = 'Download APK' }) => {
+  const [state, setState] = useState('idle'); // idle | loading | done
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    if (state === 'loading') return;
+
+    setState('loading');
+
+    // Cross-origin `download` attribute is ignored by browsers, so we
+    // force a programmatic anchor click with target="_blank". The browser
+    // will actually start the download instead of silently doing nothing.
+    try {
+      const a = document.createElement('a');
+      a.href = href;
+      a.rel = 'noopener noreferrer';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Failed to trigger APK download:', err);
+    }
+
+    setTimeout(() => {
+      setState('done');
+      setTimeout(() => setState('idle'), 1600);
+    }, 600);
+
+    onClick?.();
+  };
+
+  const base =
+    'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-150 ' +
+    'select-none touch-manipulation active:scale-[0.97] focus:outline-none focus-visible:ring-2 ' +
+    'focus-visible:ring-emerald-400 focus-visible:ring-offset-2';
+
+  const sizing =
+    size === 'lg' ? 'px-5 py-3 text-base w-full' : 'px-4 py-2.5 text-sm w-full';
+
+  const looks = {
+    idle: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/40 hover:from-emerald-600 hover:to-emerald-700',
+    loading: 'bg-emerald-600 text-white shadow-md cursor-wait opacity-95',
+    done: 'bg-emerald-700 text-white shadow-md',
+  }[state];
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-busy={state === 'loading'}
+      aria-live="polite"
+      className={`${base} ${sizing} ${looks}`}
+    >
+      {state === 'idle' && (
+        <>
+          <DownloadIcon />
+          {label}
+        </>
+      )}
+      {state === 'loading' && (
+        <>
+          <Spinner />
+          Preparing…
+        </>
+      )}
+      {state === 'done' && (
+        <>
+          <CheckIcon />
+          Downloading
+        </>
+      )}
+    </button>
+  );
+};
 
 const Footer = () => {
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -42,12 +185,14 @@ const Footer = () => {
               />
               <div>
                 <span className="font-bold text-lg">Evergreen</span>
-                <span className="font-bold text-lg text-emerald-400">Logix</span>
+                <span className="font-bold text-lg text-emerald-400">
+                  Logix
+                </span>
               </div>
             </Link>
             <p className="text-gray-400 leading-relaxed text-sm">
-              Sustainable logistics solutions for a greener tomorrow. We deliver
-              reliability, innovation, and care for the planet.
+              Sustainable logistics solutions for a greener tomorrow. We
+              deliver reliability, innovation, and care for the planet.
             </p>
           </div>
 
@@ -59,18 +204,26 @@ const Footer = () => {
             <div className="space-y-4 text-gray-400 text-sm">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Office No. 110, Bharat Chambars,
-Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
+                <span>
+                  Office No. 110, Bharat Chambars, Baroda Street Back Side
+                  Masjid Bundar East, Mumbai- 400009
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-emerald-400" />
-                <a href="tel:+918433872243" className="hover:text-emerald-400 transition-colors">
+                <a
+                  href="tel:+918433872243"
+                  className="hover:text-emerald-400 transition-colors"
+                >
                   +91 8433872243
                 </a>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-emerald-400" />
-                <a href="mailto:info@evergreenlogix.com" className="hover:text-emerald-400 transition-colors">
+                <a
+                  href="mailto:info@evergreenlogix.com"
+                  className="hover:text-emerald-400 transition-colors"
+                >
                   info@evergreenlogix.com
                 </a>
               </div>
@@ -84,56 +237,86 @@ Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
             </h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/faq" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">
+                <Link
+                  to="/faq"
+                  className="text-gray-400 hover:text-emerald-400 transition-colors text-sm"
+                >
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">
+                <Link
+                  to="/about"
+                  className="text-gray-400 hover:text-emerald-400 transition-colors text-sm"
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/blogs" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">
+                <Link
+                  to="/blogs"
+                  className="text-gray-400 hover:text-emerald-400 transition-colors text-sm"
+                >
                   Blogs
                 </Link>
               </li>
               <li>
-                <Link to="/privacy-policy" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">
+                <Link
+                  to="/privacy-policy"
+                  className="text-gray-400 hover:text-emerald-400 transition-colors text-sm"
+                >
                   Privacy & Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms-of-use" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">
+                <Link
+                  to="/terms-of-use"
+                  className="text-gray-400 hover:text-emerald-400 transition-colors text-sm"
+                >
                   Terms of Use
                 </Link>
               </li>
               <li>
-                <Link to="/refund-cancellation" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">
+                <Link
+                  to="/refund-cancellation"
+                  className="text-gray-400 hover:text-emerald-400 transition-colors text-sm"
+                >
                   Refund & Cancellation
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Newsletter */}
+          {/* ── Download App ─────────────── */}
           <div>
             <h3 className="text-lg font-bold mb-6 text-emerald-400">
-              Stay Updated
+              Download App
             </h3>
             <p className="text-gray-400 text-sm mb-4">
-              Subscribe to our newsletter for the latest updates.
+              Delivery Partner mobile app — scan the QR code or tap below to
+              download the APK.
             </p>
-            <form className="flex flex-col gap-3">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+
+            <div className="flex flex-col items-start gap-4">
+              <div className="bg-white p-3 rounded-xl shadow-lg">
+                <QRCodeCanvas value={CARGO_APK_URL} size={120} level="M" />
+              </div>
+
+              <ApkDownloadButton
+                href={CARGO_APK_URL}
+                size="lg"
+                label="Download APK"
               />
-              <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105">
-                Subscribe
-              </button>
-            </form>
+
+              <a
+                href="https://cargo.evergreenlogix.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-400 hover:text-emerald-400 transition-colors underline"
+              >
+                Visit EvergreenLogix Cargo →
+              </a>
+            </div>
           </div>
         </div>
 
@@ -171,7 +354,8 @@ Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
           </div>
 
           <p className="text-gray-400 text-sm text-center">
-            © {new Date().getFullYear()} Evergreen Logix. Developed by First Track Solution Technologies. All rights reserved.
+            © {new Date().getFullYear()} Evergreen Logix. Developed by First
+            Track Solution Technologies. All rights reserved.
           </p>
         </div>
       </div>
