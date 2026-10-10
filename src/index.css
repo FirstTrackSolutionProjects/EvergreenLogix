@@ -280,3 +280,30 @@
 .price-animate {
   animation: pulse-price 2s ease-in-out infinite;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   APK download button micro-polish
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Faster tap feedback on mobile (some older mobile browsers need an
+   explicit :active transform to render the scale immediately) */
+@media (hover: none) {
+  .active\:scale-\[0\.97\]:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Prevent iOS blue flash on tap for buttons and links */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reduce perceived tap delay on touch devices.
+   (Tailwind's `touch-manipulation` does this per-element; this is a
+   global safety net for any button we render outside Tailwind classes.) */
+button,
+[role="button"],
+a {
+  touch-action: manipulation;
+}

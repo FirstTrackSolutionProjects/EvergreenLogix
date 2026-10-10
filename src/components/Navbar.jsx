@@ -17,6 +17,151 @@ const CARGO_WEBSITE_URL = 'https://cargo.evergreenlogix.com/';
 const CARGO_APK_URL =
   'https://evergreen-logix-cargo-artifacts.s3.ap-south-1.amazonaws.com/delivery-partner-app/v1.0.0/evergreen-logix-cargo-delivery-partner-v1.0.0.apk';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Small icon helpers (kept local to avoid extra imports / tree-shaking churn)
+// ─────────────────────────────────────────────────────────────────────────────
+const DownloadIcon = ({ className = 'w-4 h-4' }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className={className}
+  >
+    <path d="M12 3v12" />
+    <path d="m7 10 5 5 5-5" />
+    <path d="M5 21h14" />
+  </svg>
+);
+
+const CheckIcon = ({ className = 'w-4 h-4' }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className={className}
+  >
+    <path d="m5 12 5 5L20 7" />
+  </svg>
+);
+
+const Spinner = ({ className = 'w-4 h-4' }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+    className={`animate-spin ${className}`}
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      stroke="currentColor"
+      strokeOpacity="0.25"
+      strokeWidth="3"
+    />
+    <path
+      d="M21 12a9 9 0 0 0-9-9"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reusable APK download button with press + loading feedback
+// ─────────────────────────────────────────────────────────────────────────────
+const ApkDownloadButton = ({ href, size = 'sm', onClick, label = 'Download APK' }) => {
+  const [state, setState] = useState('idle'); // idle | loading | done
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    if (state === 'loading') return;
+
+    setState('loading');
+
+    // Cross-origin `download` attribute is ignored by browsers, so we
+    // force a programmatic anchor click with target="_blank". The browser
+    // will actually start the download instead of silently doing nothing.
+    try {
+      const a = document.createElement('a');
+      a.href = href;
+      a.rel = 'noopener noreferrer';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Failed to trigger APK download:', err);
+    }
+
+    // Give the user confirmation, then reset
+    setTimeout(() => {
+      setState('done');
+      setTimeout(() => setState('idle'), 1600);
+    }, 600);
+
+    onClick?.();
+  };
+
+  const base =
+    'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-150 ' +
+    'select-none touch-manipulation active:scale-[0.97] focus:outline-none focus-visible:ring-2 ' +
+    'focus-visible:ring-emerald-400 focus-visible:ring-offset-2';
+
+  const sizing =
+    size === 'lg' ? 'px-5 py-3 text-base w-full' : 'px-4 py-2.5 text-sm w-full';
+
+  const looks = {
+    idle: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/40 hover:from-emerald-600 hover:to-emerald-700',
+    loading: 'bg-emerald-600 text-white shadow-md cursor-wait opacity-95',
+    done: 'bg-emerald-700 text-white shadow-md',
+  }[state];
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-busy={state === 'loading'}
+      aria-live="polite"
+      className={`${base} ${sizing} ${looks}`}
+    >
+      {state === 'idle' && (
+        <>
+          <DownloadIcon />
+          {label}
+        </>
+      )}
+      {state === 'loading' && (
+        <>
+          <Spinner />
+          Preparing…
+        </>
+      )}
+      {state === 'done' && (
+        <>
+          <CheckIcon />
+          Downloading
+        </>
+      )}
+    </button>
+  );
+};
+
 const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, name, logout, verified, role } = useAuth();
@@ -262,14 +407,14 @@ const Navbar = () => {
               <div className="bg-white p-2 rounded-lg border border-gray-200 flex-shrink-0">
                 <QRCodeCanvas value={CARGO_APK_URL} size={92} level="M" />
               </div>
-              <a
-                href={CARGO_APK_URL}
-                download
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200 hover:scale-[1.02] w-full"
-                onClick={() => setCargoDropdownOpen(false)}
-              >
-                ⬇ Download APK
-              </a>
+              <div className="flex-1">
+                <ApkDownloadButton
+                  href={CARGO_APK_URL}
+                  size="sm"
+                  label="Download APK"
+                  onClick={() => setCargoDropdownOpen(false)}
+                />
+              </div>
             </div>
           </div>
         </div>
