@@ -37,19 +37,19 @@ export const VERIFICATION_WIZARD_CONFIG = Object.freeze({
         },
         {
           name: "bank",
-          label: "Bank Name",
+          label: "Bank Name (optional)",
           required: false,
           helperText: "Enter your bank name for COD settlement (optional)",
         },
         {
           name: "ifsc",
-          label: "IFSC Code",
+          label: "IFSC Code (optional)",
           required: false,
           helperText: "Enter your bank IFSC code for COD settlement (optional)",
         },
         {
           name: "account",
-          label: "Account Number",
+          label: "Account Number (optional)",
           required: false,
           helperText: "Enter your bank account number for COD settlement (optional)",
         },
@@ -57,14 +57,14 @@ export const VERIFICATION_WIZARD_CONFIG = Object.freeze({
       fileFields: [
         {
           name: "selfie_doc",
-          label: "Selfie Photo",
-          required: true,
-          helperText: "Upload a clear selfie photo",
+          label: "Selfie Photo (optional)",
+          required: false,
+          helperText: "Upload a clear selfie photo (optional)",
           accept: "image/*",
         },
         {
           name: "cancelledCheque",
-          label: "Cancelled Cheque",
+          label: "Cancelled Cheque (optional)",
           required: false,
           helperText: "Upload cancelled cheque (optional)",
           accept: "image/*,application/pdf",
@@ -75,34 +75,34 @@ export const VERIFICATION_WIZARD_CONFIG = Object.freeze({
       id: "kyc",
       title: "KYC Data",
       enabled: true,
-      mandatory: true,
+      mandatory: false,
       textFields: [
         {
           name: "aadhar",
-          label: "Aadhar Number",
-          required: true,
-          helperText: "Enter your 12-digit Aadhar number",
+          label: "Aadhar Number (Optional)",
+          required: false,
+          helperText: "Enter your 12-digit Aadhar number (optional)",
         },
         {
           name: "pan",
-          label: "PAN Number",
-          required: true,
-          helperText: "Enter your 10-character PAN",
+          label: "PAN Number (Optional)",
+          required: false,
+          helperText: "Enter your 10-character PAN (optional)",
         },
       ],
       fileFields: [
         {
           name: "aadhar_doc",
-          label: "Aadhar Card",
-          required: true,
-          helperText: "Upload Aadhar card",
+          label: "Aadhar Card (optional)",
+          required: false,
+          helperText: "Upload Aadhar card (optional)",
           accept: "image/*,application/pdf",
         },
         {
           name: "pan_doc",
-          label: "PAN Card",
-          required: true,
-          helperText: "Upload PAN card",
+          label: "PAN Card (optional)",
+          required: false,
+          helperText: "Upload PAN card (optional)",
           accept: "image/*,application/pdf",
         },
       ],
@@ -121,19 +121,19 @@ export const VERIFICATION_WIZARD_CONFIG = Object.freeze({
         },
         {
           name: "gst",
-          label: "GST Number",
+          label: "GST Number (optional)",
           required: false,
           helperText: "Enter GST number (if applicable)",
         },
         {
           name: "msme",
-          label: "MSME Number",
+          label: "MSME Number (optional)",
           required: false,
           helperText: "Enter MSME number (if applicable)",
         },
         {
           name: "cin",
-          label: "CIN Number",
+          label: "CIN Number (optional)",
           required: false,
           helperText: "Enter CIN number (if applicable)",
         },
@@ -141,14 +141,14 @@ export const VERIFICATION_WIZARD_CONFIG = Object.freeze({
       fileFields: [
         {
           name: "msme_doc",
-          label: "MSME Certificate",
+          label: "MSME Certificate (optional)",
           required: false,
           helperText: "Upload MSME certificate (optional)",
           accept: "image/*,application/pdf",
         },
         {
           name: "gst_doc",
-          label: "GST Certificate",
+          label: "GST Certificate (optional)",
           required: false,
           helperText: "Upload GST certificate (optional)",
           accept: "image/*,application/pdf",
@@ -183,11 +183,13 @@ export const VERIFICATION_STEP_SCHEMAS = Object.freeze({
     aadhar: z
       .string()
       .min(1, "Aadhar Number is required")
-      .regex(/^\d{12}$/, "Aadhar must be 12 digits"),
+      .regex(/^\d{12}$/, "Aadhar must be 12 digits")
+      .or(z.literal("")),
     pan: z
       .string()
       .min(1, "PAN Number is required")
-      .length(10, "PAN must be 10 characters"),
+      .length(10, "PAN must be 10 characters")
+      .or(z.literal("")),
   }),
   business: z.object({
     business_name: z.string().min(1, "Business Name is required"),
