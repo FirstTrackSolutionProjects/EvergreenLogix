@@ -61,7 +61,7 @@ const createUploadSessionId = () => {
 
 const Verify = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, verified, role, id, authLoading } = useAuth();
+  const { isAuthenticated, verified, role, id, authLoading, login } = useAuth();
 
 
   const initialValues = useMemo(() => {
@@ -268,14 +268,14 @@ const Verify = () => {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        toast.error(data?.message || "Failed to submit verification request");
+        toast.error(data?.message || "Failed to submit verification");
         return;
       }
-
-      toast.success(data?.message || "Verification request submitted successfully");
-      setView("pending");
+      await login(data.token);
+      toast.success(data?.message || "Verification submitted successfully");
+      // setView("pending");
     } catch (error) {
-      toast.error(error.message || "Failed to submit verification request");
+      toast.error(error.message || "Failed to submit verification");
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -318,7 +318,7 @@ const Verify = () => {
       .finally(() => {
         setMerchantRequestsLoading(false);
       });
-  }, [isAuthenticated, verified, navigate, role]);
+  }, [isAuthenticated, verified, navigate, role, authLoading]);
 
   if (!isAuthenticated || verified) {
     return null;

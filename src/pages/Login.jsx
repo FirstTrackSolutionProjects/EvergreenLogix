@@ -35,12 +35,13 @@ const LoginForm = () => {
       const formData = { email, password };
       const loginResponse = await loginService(formData);
       if (loginResponse.success) {
-        login(loginResponse.token);
+        await login(loginResponse.token);
         toast.success("Login Successful");
       } else {
         toast.error(loginResponse.message);
       }
     } catch (err) {
+      console.error(err);
       toast.error(err.response?.data?.message || "An unexpected error occurred.");
     }
   };

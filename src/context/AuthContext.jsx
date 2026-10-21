@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (token) => {
     localStorage.setItem('token', token);
-    await isAuthenticated()
+    await refreshAuth()
   };
 
   const logout = () => {
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
-  const isAuthenticated = async () => {
+  const refreshAuth = async () => {
     try {
       setAuthLoading(true);
       const token = localStorage.getItem('token');
@@ -51,10 +51,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    isAuthenticated()
+    refreshAuth()
   }, []);
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, authLoading, features }}>
+    <AuthContext.Provider value={{ ...authState, login, logout, authLoading, features, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );
