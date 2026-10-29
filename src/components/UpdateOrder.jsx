@@ -218,12 +218,14 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
   // Auto-calculate shipment value from items
   useEffect(() => {
     const total = orders.reduce((sum, item) => {
+      const box = boxes.find(b => b.box_no === parseInt(item.box_no)) || {};
+      const boxQuantity = parseInt(box.quantity) || 1;
       const price = parseFloat(item.selling_price) || 0;
       const qty = parseInt(item.product_quantity) || 0;
-      return sum + price * qty;
+      return sum + price * qty * boxQuantity;
     }, 0);
     setFormData(prev => ({ ...prev, shipmentValue: total }));
-  }, [orders]);
+  }, [orders, boxes]);
 
   const addProduct = (boxNumber = 1) => {
     setOrders([...orders, { box_no: boxNumber, product_name: '', product_quantity: 1, selling_price: 0, tax_in_percentage: '' }]);
@@ -282,6 +284,15 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
       ...prevData,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const totalBoxes = boxes.reduce((sum, b) => sum + (parseInt(b.quantity) || 0), 0);
+  const handleB2BChange = (e) => {
+    if (!e.target.checked && boxes.length > 1) {
+      toast.warn('Only one box can be there in B2C. Remove extra boxes to switch off B2B.');
+      return;
+    }
+    handleChange(e);
   };
 
   const [invoice, setInvoice] = useState(null)
@@ -362,6 +373,10 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
     // Compare pickup time with the current IST time
     if (pickupDateAndTime < istDate) {
       toast.error('Pickup time is already passed. Please update and try again');
+      return;
+    }
+    if (!formData.isB2B && formData.boxes.length > 1) {
+      toast.error('Only one box can be there in B2C');
       return;
     }
     let boxFlag = 0
@@ -736,9 +751,12 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
                       <FormControl sx={{ minWidth: 100, flex: 1 }}>
                         <TextField label="Height (cm) *" name="height" size="small" type="number" value={box.height} onChange={(e) => handleBoxes(boxIndex, e)} />
                       </FormControl>
+                      <FormControl sx={{ minWidth: 100, flex: 1 }}>
+                        <TextField label="Box Quantity *" name="quantity" size="small" type="number" inputProps={{ min: 1, step: 1 }} value={box.quantity ?? 1} onChange={(e) => handleBoxes(boxIndex, e)} />
+                      </FormControl>
                       <Box sx={{ flex: 1, display: 'flex', minWidth: 150 }}>
                         <FormControl sx={{ flex: 1 }}>
-                          <TextField label="Weight *" name="weight" size="small" type="number" value={box.weight} onChange={(e) => handleBoxes(boxIndex, e)} />
+                          <TextField label="Weight/Pc*" name="weight" size="small" type="number" value={box.weight} onChange={(e) => handleBoxes(boxIndex, e)} />
                         </FormControl>
                         <FormControl sx={{ minWidth: 70 }}>
                           <InputLabel>Unit</InputLabel>
@@ -768,7 +786,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
                             <TextField label="Qty *" name="product_quantity" size="small" type="number" value={order.product_quantity} onChange={(e) => handleOrders(index, e)} />
                           </FormControl>
                           <FormControl sx={{ minWidth: 100, flex: 1 }}>
-                            <TextField label="Price (₹) *" name="selling_price" size="small" type="number" value={order.selling_price} onChange={(e) => handleOrders(index, e)} />
+                            <TextField label="Price/Pc (₹) *" name="selling_price" size="small" type="number" value={order.selling_price} onChange={(e) => handleOrders(index, e)} />
                           </FormControl>
                           {boxItems.length > 1 && !isShipped && (
                             <Tooltip title="Remove item">
@@ -788,10 +806,15 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
                   </Paper>
                 );
               })}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                <Button variant="contained" onClick={addBox} disabled={isShipped}>
-                  + Add Box
-                </Button>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                <Typography variant="body2" fontWeight="bold">Total Boxes: {totalBoxes}</Typography>
+                {formData.isB2B ? (
+                  <Button variant="contained" onClick={addBox} disabled={isShipped}>
+                    + Add Box
+                  </Button>
+                ) : (
+                  <Typography variant="caption" color="text.secondary">Only one box is allowed for B2C shipments.</Typography>
+                )}
               </Box>
             </div>
           </Box>
@@ -799,7 +822,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
             control={
               <Checkbox
                 checked={formData.isB2B}
-                onChange={handleChange}
+                onChange={handleB2BChange}
                 name="isB2B"
               />
             }

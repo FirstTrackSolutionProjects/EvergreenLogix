@@ -240,6 +240,14 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
+  const totalBoxes = boxes.reduce((sum, b) => sum + (parseInt(b.quantity) || 0), 0);
+  const handleB2BChange = (e) => {
+    if (!e.target.checked && boxes.length > 1) {
+      toast.warn('Only one box can be there in B2C. Remove extra boxes to switch off B2B.');
+      return;
+    }
+    handleChange(e);
+  };
   const [invoice, setInvoice] = useState(null)
   const handleInvoice = (e) => {
     const { files } = e.target;
@@ -293,6 +301,10 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
     e.preventDefault();
     console.log(formData)
 
+    if (!formData.isB2B && formData.boxes.length > 1) {
+      toast.error('Only one box can be there in B2C');
+      return;
+    }
     let boxFlag = 0
     for (let i = 0; i < formData.boxes.length; i++) {
       for (let j = 0; j < formData.orders.length; j++) {
@@ -704,13 +716,20 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
                 )}
               </Box>
             ))}
-            <Button
-              variant="contained"
-              onClick={addBox}
-              sx={{ borderRadius: '4px', mt: 2 }}
-            >
-              Add More Boxes
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+              <Typography variant="body2" fontWeight="bold">Total Boxes: {totalBoxes}</Typography>
+              {formData.isB2B ? (
+                <Button
+                  variant="contained"
+                  onClick={addBox}
+                  sx={{ borderRadius: '4px' }}
+                >
+                  Add More Boxes
+                </Button>
+              ) : (
+                <Typography variant="caption" color="text.secondary">Only one box is allowed for B2C shipments.</Typography>
+              )}
+            </Box>
           </Box>
           <Box sx={{ my: 4 }}>
             <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Items</div>
@@ -788,7 +807,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             control={
               <Checkbox
                 checked={formData.isB2B}
-                onChange={handleChange}
+                onChange={handleB2BChange}
                 name="isB2B"
               />
             }
