@@ -188,6 +188,8 @@ const FullDetails = () => {
     name: 'boxes'
   });
   const watchedOrders = useWatch({ control, name: 'orders' });
+  const watchedBoxes = useWatch({ control, name: 'boxes' });
+  const totalBoxes = (watchedBoxes || []).reduce((sum, b) => sum + (parseInt(b.quantity) || 0), 0);
   useEffect(() => {
 
     const pinToAdd = async () => {
@@ -230,12 +232,14 @@ const FullDetails = () => {
   useEffect(() => {
     if (!watchedOrders || watchedOrders.length === 0) return;
     const total = watchedOrders.reduce((sum, item) => {
+      const box = watchedBoxes.find(b => b.box_no === parseInt(item.box_no)) || {};
+      const boxQuantity = parseInt(box.quantity) || 1;
       const price = parseFloat(item.selling_price) || 0;
       const qty = parseInt(item.product_quantity) || 0;
-      return sum + price * qty;
+      return sum + price * qty * boxQuantity;
     }, 0);
     setValue('shipmentValue', total);
-  }, [watchedOrders])
+  }, [watchedOrders, watchedBoxes])
 
   const onSubmit = async (data) => {
     const now = new Date();
@@ -248,6 +252,10 @@ const FullDetails = () => {
     // Compare pickup time with the current IST time
     if (pickupDateAndTime < istDate) {
       toast.error('Pickup time is already passed. Please update and try again');
+      return;
+    }
+    if (!data.isB2B && data.boxes.length > 1) {
+      toast.error('Only one box can be there in B2C');
       return;
     }
     let boxFlag = 0
@@ -661,8 +669,13 @@ const FullDetails = () => {
                         <input className="w-full border border-gray-300 py-2 px-3 rounded focus:ring-2 focus:ring-blue-500" type="number" {...register(`boxes[${boxIndex}].height`)} />
                         {errors.boxes?.[boxIndex]?.height && <span className='text-red-500 text-xs'>{errors.boxes[boxIndex].height.message}</span>}
                       </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Box Quantity <span className="text-red-500">*</span></label>
+                        <input className="w-full border border-gray-300 py-2 px-3 rounded focus:ring-2 focus:ring-blue-500" type="number" min={1} step={1} {...register(`boxes[${boxIndex}].quantity`)} />
+                        {errors.boxes?.[boxIndex]?.quantity && <span className='text-red-500 text-xs'>{errors.boxes[boxIndex].quantity.message}</span>}
+                      </div>
                       <div className="space-y-1 col-span-2 md:col-span-1">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Weight <span className="text-red-500">*</span></label>
+                        <label className="text-xs font-bold text-gray-500 uppercase">Weight/Pc <span className="text-red-500">*</span></label>
                         <div className="flex gap-1">
                           <input className="w-2/3 border border-gray-300 py-2 px-2 rounded focus:ring-2 focus:ring-blue-500" type="number" {...register(`boxes[${boxIndex}].weight`)} />
                           <select className="w-1/3 border border-gray-300 py-2 px-1 rounded text-xs" {...register(`boxes[${boxIndex}].weight_unit`)}>
@@ -700,7 +713,7 @@ const FullDetails = () => {
                           {errors.orders?.[index]?.product_quantity && <span className='text-red-500 text-xs'>{errors.orders[index].product_quantity.message}</span>}
                         </div>
                         <div className="md:col-span-3">
-                          <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Price (₹) <span className="text-red-500">*</span></label>
+                          <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Price/Pc (₹) <span className="text-red-500">*</span></label>
                           <input className="w-full border border-gray-300 py-2 px-3 rounded focus:ring-2 focus:ring-green-400" type="number" min={0} {...register(`orders[${index}].selling_price`)} />
                           {errors.orders?.[index]?.selling_price && <span className='text-red-500 text-xs'>{errors.orders[index].selling_price.message}</span>}
                         </div>
@@ -734,14 +747,19 @@ const FullDetails = () => {
             })}
 
             {/* Add Box — below the list, right-aligned */}
-            <div className="flex justify-end">
-              <button
-                type="button"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
-                onClick={() => boxes.append({ box_no: watch('boxes').length + 1, length: 10, breadth: 10, height: 10, weight: 1, weight_unit: 'kg', quantity: 1 })}
-              >
-                + Add Box
-              </button>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-semibold text-gray-700">Total Boxes: {totalBoxes}</span>
+              {watch('isB2B') ? (
+                <button
+                  type="button"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+                  onClick={() => boxes.append({ box_no: watch('boxes').length + 1, length: 10, breadth: 10, height: 10, weight: 1, weight_unit: 'kg', quantity: 1 })}
+                >
+                  + Add Box
+                </button>
+              ) : (
+                <span className="text-xs text-gray-400">Only one box is allowed for B2C shipments.</span>
+              )}
             </div>
           </div>
         </div>
@@ -787,7 +805,14 @@ const FullDetails = () => {
               <label className="text-sm font-medium text-gray-700 cursor-pointer" htmlFor="insurance">Add Insurance for this shipment</label>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg flex-1 min-w-[250px]">
-              <input className="w-5 h-5 text-purple-600 rounded border-gray-300" type="checkbox" id="isB2B" {...register("isB2B")} />
+              <input className="w-5 h-5 text-purple-600 rounded border-gray-300" type="checkbox" id="isB2B" {...register("isB2B", {
+                onChange: (e) => {
+                  if (!e.target.checked && watch('boxes').length > 1) {
+                    setValue('isB2B', true);
+                    toast.warn('Only one box can be there in B2C. Remove extra boxes to switch off B2B.');
+                  }
+                }
+              })} />
               <label className="text-sm font-medium text-gray-700 cursor-pointer" htmlFor="isB2B">This is a B2B Shipment</label>
             </div>
           </div>
