@@ -27,6 +27,7 @@ import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
 import { toast } from "react-toastify";
 import convertToUTCISOString from "../helpers/convertToUTCISOString";
+import hasMultipleBoxes from "../helpers/hasMultipleBoxes";
 import { DOMESTIC_ORDER_STATUS_ENUMS } from "@/Constants";
 
 import WarehouseSelect from "./UiComponents/WarehouseSelect";
@@ -242,7 +243,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
   };
   const totalBoxes = boxes.reduce((sum, b) => sum + (parseInt(b.quantity) || 0), 0);
   const handleB2BChange = (e) => {
-    if (!e.target.checked && boxes.length > 1) {
+    if (!e.target.checked && hasMultipleBoxes(boxes)) {
       toast.warn('Only one box can be there in B2C. Remove extra boxes to switch off B2B.');
       return;
     }
@@ -301,7 +302,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
     e.preventDefault();
     console.log(formData)
 
-    if (!formData.isB2B && formData.boxes.length > 1) {
+    if (!formData.isB2B && hasMultipleBoxes(formData.boxes)) {
       toast.error('Only one box can be there in B2C');
       return;
     }

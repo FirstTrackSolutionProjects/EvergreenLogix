@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import WarehouseSelect from './UiComponents/WarehouseSelect';
 import { toast } from 'react-toastify';
+import hasMultipleBoxes from '../helpers/hasMultipleBoxes';
 const API_URL = import.meta.env.VITE_APP_API_URL
 
 const getTodaysDate = () => {
@@ -254,7 +255,7 @@ const FullDetails = () => {
       toast.error('Pickup time is already passed. Please update and try again');
       return;
     }
-    if (!data.isB2B && data.boxes.length > 1) {
+    if (!data.isB2B && hasMultipleBoxes(data.boxes)) {
       toast.error('Only one box can be there in B2C');
       return;
     }
@@ -807,7 +808,7 @@ const FullDetails = () => {
             <div className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg flex-1 min-w-[250px]">
               <input className="w-5 h-5 text-purple-600 rounded border-gray-300" type="checkbox" id="isB2B" {...register("isB2B", {
                 onChange: (e) => {
-                  if (!e.target.checked && watch('boxes').length > 1) {
+                  if (!e.target.checked && hasMultipleBoxes(watch('boxes'))) {
                     setValue('isB2B', true);
                     toast.warn('Only one box can be there in B2C. Remove extra boxes to switch off B2B.');
                   }

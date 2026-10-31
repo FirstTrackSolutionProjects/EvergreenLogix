@@ -32,6 +32,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TrackingShareDialog from './TrackingShareDialog';
 import convertToUTCISOString from "../helpers/convertToUTCISOString";
+import hasMultipleBoxes from "../helpers/hasMultipleBoxes";
 import { DOMESTIC_ORDER_STATUS_ENUMS, WALLET_TYPES } from "@/Constants";
 import WarehouseSelect from "./UiComponents/WarehouseSelect";
 import getB2CBulkShipmentPriceService from "@/services/bulkServices/get_batch_price.bulk.service";
@@ -288,7 +289,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
 
   const totalBoxes = boxes.reduce((sum, b) => sum + (parseInt(b.quantity) || 0), 0);
   const handleB2BChange = (e) => {
-    if (!e.target.checked && boxes.length > 1) {
+    if (!e.target.checked && hasMultipleBoxes(boxes)) {
       toast.warn('Only one box can be there in B2C. Remove extra boxes to switch off B2B.');
       return;
     }
@@ -375,7 +376,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
       toast.error('Pickup time is already passed. Please update and try again');
       return;
     }
-    if (!formData.isB2B && formData.boxes.length > 1) {
+    if (!formData.isB2B && hasMultipleBoxes(formData.boxes)) {
       toast.error('Only one box can be there in B2C');
       return;
     }
