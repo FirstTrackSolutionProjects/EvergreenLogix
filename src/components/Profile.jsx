@@ -206,7 +206,7 @@ const Profile = () => {
           <div className='w-full space-y-6'>
             <div className='w-full flex items-center flex-col md:flex-row justify-center space-x-8'>
               <div className='flex justify-center items-center w-32 h-32'>
-                <img src={profilePhoto || '/user.webp'} alt="Profile" className="object-contain" />
+                <img src={profilePhoto || '/Logo.png'} alt="Profile" className="object-contain" />
               </div>
               <div className=''>
                 <p className='font-medium text-xl flex items-center gap-2'>
