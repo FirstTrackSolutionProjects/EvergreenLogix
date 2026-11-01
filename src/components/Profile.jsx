@@ -31,7 +31,7 @@ const Profile = () => {
     gst_doc: null,
     cancelledCheque: null,
   })
-  const [profilePhoto, setProfilePhoto] = useState(null)
+  const [profilePhoto, setProfilePhoto] = useState('/Logo.png')
   const [userRole, setUserRole] = useState(null) // State to store the user's role
 
   const handleCopy = (text) => {
@@ -50,8 +50,8 @@ const Profile = () => {
 
   useEffect(()=>{
       const getProfilePhoto = async () => {
-          if (!profileData?.selfie_doc) {
-              setProfilePhoto(null);
+          if (!profileData?.selfie_doc || userRole === USER_ROLES.ADMIN) {
+              setProfilePhoto('/Logo.png');
               return;
           }
           await fetch(`${API_URL}/s3/getUrl`, {
@@ -65,7 +65,7 @@ const Profile = () => {
           }).then((response)=>response.json()).then(result => setProfilePhoto(result.downloadURL))
           .catch(error => {
               console.error("Failed to fetch profile photo URL:", error);
-              setProfilePhoto(null);
+              setProfilePhoto('/Logo.png');
           });
       }
       getProfilePhoto()
@@ -229,7 +229,7 @@ const Profile = () => {
                   {profileData.phone && <FaRegCopy className="cursor-pointer text-gray-400 hover:text-gray-600 text-xs" onClick={() => handleCopy(profileData.phone)} title="Copy" />}
                 </p>
                 {/* Balance will come from a different endpoint typically, for now, keep coming soon */}
-                <p className='font-medium text-sm text-green-400'>Balance : (Coming Soon)</p>
+                {/* <p className='font-medium text-sm text-green-400'>Balance : (Coming Soon)</p> */}
               </div>
             </div>
             <div className='w-full font-medium text-gray-700'>
