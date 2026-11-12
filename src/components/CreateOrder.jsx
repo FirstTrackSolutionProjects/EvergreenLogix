@@ -466,7 +466,7 @@ const FullDetails = () => {
               <input
                 className="w-full border border-gray-300 py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
                 type="text"
-                maxLength={100}
+                maxLength={200}
                 id="address"
                 {...register("address")}
                 placeholder="Ex. 123 Street, Landmark"

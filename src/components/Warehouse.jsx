@@ -104,7 +104,7 @@ const Warehouse = () => {
 		WAREHOUSE_ID: { headerName: 'ID', minWidth: 90 },
 		WAREHOUSE_NAME: { headerName: 'Warehouse Name', minWidth: 200, filter: true, config: { maxLength: 32}, filterConfig: { type: 'text', default: '' } },
 		WAREHOUSE_PHONE: { headerName: 'Warehouse Phone', minWidth: 150, filter: true, config: { maxLength: 10, minLength: 10 }, filterConfig: { type: 'text', default: '' } },
-		WAREHOUSE_ADDRESS: { headerName: 'Warehouse Address', minWidth: 250, config: { maxLength: 100 }, filter: false },
+		WAREHOUSE_ADDRESS: { headerName: 'Warehouse Address', minWidth: 250, config: { maxLength: 200 }, filter: false },
 		WAREHOUSE_CITY: { headerName: 'City', minWidth: 120, filter: false },
 		WAREHOUSE_STATE: { headerName: 'State', minWidth: 120, filter: false },
 		WAREHOUSE_PINCODE: { headerName: 'Pincode', minWidth: 120, config: { maxLength: 6, minLength: 6 }, filter: false },
