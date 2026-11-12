@@ -280,7 +280,10 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped, fetchData }) =
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    let { name, value, type, checked } = e.target;
+    if (name === "address"){
+      value = value.slice(0, 300);
+    }
     setFormData((prevData) => ({
       ...prevData,
       [name]: type === 'checkbox' ? checked : value
