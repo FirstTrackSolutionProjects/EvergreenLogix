@@ -1341,31 +1341,149 @@ const BulkShipList = ({ batch, isBulkShipOpen, setIsBulkShipOpen, setIsBatchProc
 };
 
 const PickupRequest = ({ setPickup }) => {
+  const getDefaultPickupDateTime = () => {
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+
+    return {
+      pickDate: `${year}-${month}-${day}`,
+      pickTime: `${hours}:${minutes}`
+    };
+  };
   const [formData, setFormData] = useState({
     wid: "",
     pickDate: "",
     pickTime: "",
-    packages: "",
+    packages: 1,
     serviceId: ""
   });
 
+  useEffect(()=>{
+    setFormData((prev) => ({...prev, ...getDefaultPickupDateTime()}));
+  },[])
+
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await fetch(`${API_URL}/shipment/domestic/pickup/request`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': localStorage.getItem('token')
-      },
-      body: JSON.stringify(formData)
-    }).then(response => response.json()).then(result => {
-      alert(result.schedule);
-    });
+
+    // Validate warehouse
+    if (!formData.wid) {
+      return toast.error("Please select a pickup warehouse.");
+    }
+
+    // Validate delivery partner
+    if (!formData.serviceId) {
+      return toast.error("Please select a delivery partner.");
+    }
+
+    // Validate pickup date
+    if (!formData.pickDate) {
+      return toast.error("Please select a pickup date.");
+    }
+
+    const selectedDate = new Date(`${formData.pickDate}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (isNaN(selectedDate.getTime())) {
+      return toast.error("Please enter a valid pickup date.");
+    }
+
+    if (selectedDate < today) {
+      return toast.error("Pickup date cannot be in the past.");
+    }
+
+    // Validate pickup time
+    if (!formData.pickTime) {
+      return toast.error("Please select a pickup time.");
+    }
+
+    const [hours, minutes] = formData.pickTime.split(":").map(Number);
+
+    if (
+      !Number.isInteger(hours) ||
+      !Number.isInteger(minutes) ||
+      hours < 0 || hours > 23 ||
+      minutes < 0 || minutes > 59
+    ) {
+      return toast.error("Please enter a valid pickup time.");
+    }
+
+    // Validate package count
+    const packageCount = Number(formData.packages);
+
+    if (!formData.packages.trim()) {
+      return toast.error("Please enter the number of packages.");
+    }
+
+    if (!Number.isInteger(packageCount) || packageCount <= 0) {
+      return toast.error("Number of packages must be a positive integer.");
+    }
+
+    // Prevent past pickup times for today's date
+    if (selectedDate.getTime() === today.getTime()) {
+      const selectedDateTime = new Date(
+        `${formData.pickDate}T${formData.pickTime}`
+      );
+
+      if (selectedDateTime <= new Date()) {
+        return toast.error("Pickup time must be in the future.");
+      }
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/shipment/domestic/pickup/request`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": localStorage.getItem("token")
+          },
+          body: JSON.stringify({
+            ...formData,
+            packages: packageCount
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return toast.error(
+          result.error || result.message || "Failed to submit pickup request."
+        );
+      }
+
+      if (result.error) {
+        return toast.error(result.error);
+      }
+
+      toast.success(result.schedule || result.message || "Pickup request submitted successfully.");
+
+      setPickup(false);
+
+    } catch (error) {
+      console.error("Pickup request error:", error);
+      toast.error("Something went wrong while submitting the pickup request.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -1399,7 +1517,6 @@ const PickupRequest = ({ setPickup }) => {
               label="Delivery Partner"
             >
               <MenuItem value="">Select Service</MenuItem>
-              {/* <MenuItem value="2">Delhivery (10Kg)</MenuItem> */}
               <MenuItem value="1">Delhivery (500gm)</MenuItem>
             </Select>
           </FormControl>
@@ -1438,13 +1555,18 @@ const PickupRequest = ({ setPickup }) => {
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button variant="contained" onClick={handleSubmit}>
-          Submit
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? "Submitting..." : "Submit"}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
+
 
 // Add pagination component
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
