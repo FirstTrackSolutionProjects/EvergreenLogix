@@ -450,7 +450,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             </FormControl>
             <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
               <TextField
-                label="Buyer's Name"
+                label="Consignee's Name"
                 name="name"
                 size="small"
                 placeholder="Ex. Aditya Kumar"
@@ -460,7 +460,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             </FormControl>
             <FormControl fullWidth sx={{ minWidth: 300, flex: 2 }}>
               <TextField
-                label="Buyer's email"
+                label="Consignee's email"
                 name="email"
                 placeholder="Ex. customer@example.com"
                 size="small"
@@ -470,7 +470,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             </FormControl>
             <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
               <TextField
-                label="Buyer's Phone"
+                label="Consignee's Phone"
                 name="phone"
                 size="small"
                 placeholder="Ex. 1234554321"

@@ -461,7 +461,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             </FormControl>
             <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
               <TextField
-                label="Buyer's Name"
+                label="Consignee's Name"
                 name="name"
                 size="small"
                 placeholder="Ex. Aditya Kumar"
@@ -471,7 +471,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             </FormControl>
             <FormControl fullWidth sx={{ minWidth: 300, flex: 2 }}>
               <TextField
-                label="Buyer's email"
+                label="Consignee's email"
                 name="email"
                 placeholder="Ex. customer@example.com"
                 size="small"
@@ -481,7 +481,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             </FormControl>
             <FormControl fullWidth sx={{ minWidth: 300, flex: 1 }}>
               <TextField
-                label="Buyer's Phone"
+                label="Consignee's Phone"
                 name="phone"
                 size="small"
                 placeholder="Ex. 1234554321"
@@ -728,7 +728,9 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
                   Add More Boxes
                 </Button>
               ) : (
-                <Typography variant="caption" color="text.secondary">Only one box is allowed for B2C shipments.</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Only Identical Boxes are allowed for B2C 
+                  </Typography>
               )}
             </Box>
           </Box>
@@ -814,8 +816,7 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
             }
             label="Is this is a B2B shipment?"
           />
-          {formData.isB2B ? (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
               <FormControl sx={{ minWidth: 150, flex:1 }}>
                 <TextField
                   label="Invoice Number"
@@ -873,7 +874,6 @@ const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
                 />
               </FormControl>
             </Box>
-          ): null}
           <FormControlLabel
             control={<Checkbox checked={!!formData.insurance} onChange={handleChange} name="insurance" />}
             label="Do you want insurance?"

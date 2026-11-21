@@ -100,20 +100,20 @@ export const FormProvider = ({ children }) => {
     },
     name: {
       category: 'Receiver Details',
-      label: "Buyer Name",
+      label: "Consignee Name",
       inputType: 'text',
       required: true,
       validation: z
         .string({
           error: issue =>
             issue.input === undefined
-              ? "Buyer name is required"
+              ? "Consignee name is required"
               : issue.code === 'invalid_type'
-              ? 'Buyer name must be a string'
+              ? 'Consignee name must be a string'
               : undefined,
         })
-        .min(1, { error: "Buyer name is required" })
-        .max(50, { error: 'Buyer name must be less than 50 characters' }),
+        .min(1, { error: "Consignee name is required" })
+        .max(50, { error: 'Consignee name must be less than 50 characters' }),
       colSpan: 6,
     },
     email: {
