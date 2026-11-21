@@ -50,7 +50,7 @@ const schema = z.object({
   // order: z.string().min(1, "Order ID is required"),
   // date: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Invalid date format (DD/MM/YYYY)"),
   payMode: z.enum(['COD', 'Pre-paid', 'topay']),
-  name: z.string().min(1, "Buyer's name is required"),
+  name: z.string().min(1, "Consignee's name is required"),
   email: z.string().email("Invalid email address").or(z.literal("")),
   phone: z.string().regex(/^\d{10}$/, "Invalid phone number"),
   address: z.string().min(1, "Shipping address is required"),
@@ -108,9 +108,9 @@ const schema = z.object({
   .trim()
   .regex(/^\d{12}$/, "Invalid E-Waybill number")
   .or(z.literal("")),
-  invoiceNumber: z.string().optional(),
-  invoiceDate: z.string().optional(),
-  invoiceAmount: z.coerce.number().min(1, "Invoice Amount must be a positive number"),
+  invoiceNumber: z.string("Invoice Number is required").trim().regex(/^([a-zA-Z1-9]{1}[a-zA-Z0-9\/-]{0,15})$/, "Invalid Invoice Format"),
+  invoiceDate: z.string("Invoice date is required"),
+  invoiceAmount: z.coerce.number("Invoice Amount must be number").min(1, "Invoice Amount must be a positive number"),
   invoiceUrl: z.string().optional(),
   isB2B: z.boolean(),
   customer_reference_number: z.string().max(15, "Customer Reference Number cannot exceed 15 characters")
@@ -417,12 +417,12 @@ const FullDetails = () => {
           </div>
         </div>
 
-        {/* Buyer Information Card */}
+        {/* Consignee Information Card */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold mb-6 border-b pb-2 text-blue-600">Buyer Information</h2>
+          <h2 className="text-xl font-semibold mb-6 border-b pb-2 text-blue-600">Consignee Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700" htmlFor="name">Buyer's Name <span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium text-gray-700" htmlFor="name">Consignee's Name <span className="text-red-500">*</span></label>
               <input
                 className="w-full border border-gray-300 py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
                 type="text"
@@ -759,7 +759,9 @@ const FullDetails = () => {
                   + Add Box
                 </button>
               ) : (
-                <span className="text-xs text-gray-400">Only one box is allowed for B2C shipments.</span>
+                <span className="text-xs text-gray-400">
+                  Only Identical Boxes are allowed for B2C
+                  </span>
               )}
             </div>
           </div>
@@ -821,42 +823,44 @@ const FullDetails = () => {
 
         {/* Tax Details Card */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold mb-6 border-b pb-2 text-blue-600">Tax & B2B Details</h2>
+          <h2 className="text-xl font-semibold mb-6 border-b pb-2 text-blue-600">Tax Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700" htmlFor="gst">Seller GSTIN</label>
               <input className="w-full border border-gray-300 py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-500" type="text" id="gst" {...register("gst")} />
               {errors.gst && <span className='text-red-500 text-sm'>{errors.gst.message}</span>}
             </div>
-            <div className="space-y-2">
+            {watch('isB2B') && <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700" htmlFor="Cgst">Customer GSTIN (For B2B)</label>
               <input className="w-full border border-gray-300 py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-500" type="text" id="Cgst" {...register("Cgst")} />
-            </div>
-            
-            {watch("isB2B") && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700" htmlFor="invoiceNumber">Invoice Number</label>
-                    <input className="w-full border border-gray-300 py-2 px-4 rounded-lg" type="text" {...register("invoiceNumber")} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700" htmlFor="invoiceDate">Invoice Date</label>
-                    <input className="w-full border border-gray-300 py-2 px-4 rounded-lg" type="date" {...register("invoiceDate")} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700" htmlFor="invoiceAmount">Invoice Amount</label>
-                    <input className="w-full border border-gray-300 py-2 px-4 rounded-lg" type="number" {...register("invoiceAmount")} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700" htmlFor="invoiceFile">Upload Invoice Copy</label>
-                    <div className="flex gap-2">
-                      <input className="flex-1 border border-gray-300 py-1.5 px-3 rounded-lg text-sm" type="file" onChange={handleInvoice} />
-                      <button type='button' className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition" onClick={handleInvoiceUpload}>Upload</button>
-                    </div>
-                    {errors.invoiceUrl && <span className='text-red-500 text-xs block'>{errors.invoiceUrl.message}</span>}
-                  </div>
-                </>
-              )}
+            </div>}
+          </div>
+        </div>
+
+        {/* Invoice Details Card */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <h2 className="text-xl font-semibold mb-6 border-b pb-2 text-blue-600">Invoice Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700" htmlFor="invoiceNumber">Invoice Number</label>
+                <input className="w-full border border-gray-300 py-2 px-4 rounded-lg" type="text" {...register("invoiceNumber")} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700" htmlFor="invoiceDate">Invoice Date</label>
+                <input className="w-full border border-gray-300 py-2 px-4 rounded-lg" type="date" {...register("invoiceDate")} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700" htmlFor="invoiceAmount">Invoice Amount</label>
+                <input className="w-full border border-gray-300 py-2 px-4 rounded-lg" type="number" {...register("invoiceAmount")} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700" htmlFor="invoiceFile">Upload Invoice Copy</label>
+                <div className="flex gap-2">
+                  <input className="flex-1 border border-gray-300 py-1.5 px-3 rounded-lg text-sm" type="file" onChange={handleInvoice} />
+                  <button type='button' className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition" onClick={handleInvoiceUpload}>Upload</button>
+                </div>
+                {errors.invoiceUrl && <span className='text-red-500 text-xs block'>{errors.invoiceUrl.message}</span>}
+              </div>
           </div>
         </div>
 
