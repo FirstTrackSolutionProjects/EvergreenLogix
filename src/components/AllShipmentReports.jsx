@@ -1147,6 +1147,43 @@ const OrderDetailsDialog = ({ isOpen, onClose, orderId, shipment }) => {
               </Paper>
             </Box>
 
+            {/* Invoice Details */}
+            {(shipment.invoice_number || shipment.invoice_date || shipment.invoice_amount || shipment.invoice_url) && (
+              <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, bgcolor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                <Typography variant="subtitle2" color="text.secondary" fontWeight="700" sx={{ letterSpacing: '0.05em', fontSize: '0.7rem', mb: 2 }}>
+                  INVOICE DETAILS
+                </Typography>
+                <Box className="grid grid-cols-2 gap-x-3 gap-y-4">
+                  {shipment.invoice_number && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Invoice Number</Typography>
+                      <Typography variant="body2" fontWeight="700" color="text.primary">{shipment.invoice_number}</Typography>
+                    </Box>
+                  )}
+                  {shipment.invoice_date && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Invoice Date</Typography>
+                      <Typography variant="body2" fontWeight="700" color="text.primary">{new Date(shipment.invoice_date).toLocaleDateString('en-IN')}</Typography>
+                    </Box>
+                  )}
+                  {shipment.invoice_amount && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Invoice Amount</Typography>
+                      <Typography variant="body2" fontWeight="700" color="text.primary">₹{parseFloat(shipment.invoice_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Typography>
+                    </Box>
+                  )}
+                  {shipment.invoice_url && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight="600" display="block">Invoice File</Typography>
+                      <a href={import.meta.env.VITE_APP_BUCKET_URL + shipment.invoice_url} target="_blank" rel="noreferrer" style={{ color: '#2563EB', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'underline' }}>
+                        View Invoice
+                      </a>
+                    </Box>
+                  )}
+                </Box>
+              </Paper>
+            )}
+
             {/* Summary Section */}
             <Box display="flex" justifyContent="flex-end" pt={2} pb={2}>
               <Paper 
