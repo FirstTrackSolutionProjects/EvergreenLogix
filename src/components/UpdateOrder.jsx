@@ -1411,7 +1411,7 @@ const PickupRequest = ({ setPickup }) => {
     // Validate package count
     const packageCount = Number(formData.packages);
 
-    if (!formData.packages.trim()) {
+    if (!formData.packages || formData.packages <= 0) {
       return toast.error("Please enter the number of packages.");
     }
 
