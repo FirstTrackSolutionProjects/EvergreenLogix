@@ -1,4 +1,4 @@
-// src/pages/Contact.jsx
+
 import React, { useState } from "react";
 import sendContactEmailService from "../services/sendContactEmailService";
 import {
@@ -15,9 +15,16 @@ import {
   FaInstagram,
   FaLinkedin,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
 
-const INITIAL_FORM = { name: "", email: "", mobile: "", subject: "", message: "" };
+const INITIAL_FORM = {
+  name: "",
+  email: "",
+  mobile: "",
+  subject: "",
+  message: "",
+};
+
+const CONTACT_NUMBER = "918433872243";
 
 const Contact = () => {
   const [form, setForm] = useState(INITIAL_FORM);
@@ -26,28 +33,48 @@ const Contact = () => {
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+
     setError("");
     setSuccess("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const { name, email, mobile, subject, message } = form;
-    if (!name || !email || !mobile || !subject || !message) {
+
+    if (!name.trim() || !email.trim() || !mobile.trim() ||
+        !subject.trim() || !message.trim()) {
       setError("All fields are required.");
       return;
     }
+
     setLoading(true);
     setError("");
     setSuccess("");
+
     try {
-      const res = await sendContactEmailService(name, email, mobile, subject, message);
+      const res = await sendContactEmailService(
+        name,
+        email,
+        mobile,
+        subject,
+        message
+      );
+
       if (res?.status === 200) {
-        setSuccess("Your message has been sent successfully! We'll get back to you soon.");
+        setSuccess(
+          "Your message has been sent successfully! We'll get back to you soon."
+        );
         setForm(INITIAL_FORM);
       } else {
-        setError(res?.message || "Something went wrong. Please try again.");
+        setError(
+          res?.message || "Something went wrong. Please try again."
+        );
       }
     } catch {
       setError("Failed to send message. Please try again later.");
@@ -58,7 +85,7 @@ const Contact = () => {
 
   return (
     <>
-      {/* Hero */}
+      {/* ================= HERO SECTION ================= */}
       <section
         className="min-h-[40vh] md:min-h-[50vh] flex items-center justify-center bg-cover bg-center relative"
         style={{
@@ -66,80 +93,110 @@ const Contact = () => {
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/80 to-emerald-800/60" />
+
         <div className="relative text-center px-4">
           <span className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-4 border border-white/20">
             Get In Touch
           </span>
+
           <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
             Contact Us
           </h1>
-          <p className="text-white/80 text-lg mt-2">We're here to help you 24/7</p>
+
+          <p className="text-white/80 text-lg mt-2">
+            We're here to help you 24/7
+          </p>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
+      {/* ================= CONTACT SECTION ================= */}
+      <section className="py-12 md:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            {/* Form */}
-            <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100">
+
+            {/* ================= CONTACT FORM ================= */}
+            <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl p-5 sm:p-6 md:p-8 border border-gray-100">
+
               <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
                 Send Us a Message
               </h2>
-              <p className="text-gray-500 mb-6">We'll get back to you within 24 hours</p>
 
-              {/* Success banner */}
+              <p className="text-gray-500 mb-6">
+                We'll get back to you within 24 hours
+              </p>
+
+              {/* Success Message */}
               {success && (
                 <div className="mb-4 flex items-start gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-4 py-3 text-sm font-medium">
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <span>✓</span>
                   {success}
                 </div>
               )}
-              {/* Error banner */}
+
+              {/* Error Message */}
               {error && (
                 <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm font-medium">
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                  <span>!</span>
                   {error}
                 </div>
               )}
 
-              <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+              <form
+                className="space-y-4"
+                onSubmit={handleSubmit}
+                noValidate
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                   <input
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
                     placeholder="Your Name"
+                    autoComplete="name"
                     className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                   />
+
                   <input
                     type="email"
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="Email"
+                    placeholder="Email Address"
+                    autoComplete="email"
                     className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                   />
+
                 </div>
 
-                <div className="flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all duration-200">
+                {/* Mobile Number */}
+                <div className="flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-emerald-500 transition-all duration-200">
+
                   <img
                     src="https://flagcdn.com/w40/in.png"
                     alt="India"
                     className="w-5 h-4 mr-2 rounded-sm"
                   />
-                  <span className="text-gray-700 text-sm mr-3 border-r pr-3">+91</span>
+
+                  <span className="text-gray-700 text-sm mr-3 border-r pr-3">
+                    +91
+                  </span>
+
                   <input
                     type="tel"
                     name="mobile"
                     value={form.mobile}
                     onChange={handleChange}
                     placeholder="Enter phone number"
+                    autoComplete="tel-national"
+                    maxLength={10}
                     className="w-full outline-none text-gray-800 placeholder-gray-400 text-sm py-3"
                   />
+
                 </div>
 
+                {/* Subject */}
                 <input
                   type="text"
                   name="subject"
@@ -149,94 +206,464 @@ const Contact = () => {
                   className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                 />
 
+                {/* Message */}
                 <textarea
                   name="message"
                   value={form.message}
                   onChange={handleChange}
                   placeholder="Your Message"
-                  className="w-full border border-gray-300 px-4 py-3 rounded-lg h-32 resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                  rows="5"
+                  className="w-full border border-gray-300 px-4 py-3 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                 />
 
+                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200 hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  {loading ? "Sending…" : "Send Message"}
+                  {loading ? "Sending..." : "Send Message"}
+
                   {!loading && <Send className="w-5 h-5" />}
                 </button>
+
               </form>
             </div>
 
-            {/* Contact Info */}
+            {/* ================= CONTACT INFORMATION ================= */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 md:p-8 text-white">
-                <h3 className="text-xl font-bold mb-4">Contact Information</h3>
-                <div className="space-y-4">
+
+              {/* Contact Card */}
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 md:p-8 text-white shadow-lg">
+
+                <h3 className="text-xl font-bold mb-6">
+                  Contact Information
+                </h3>
+
+                <div className="space-y-5">
+
+                  {/* Address */}
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-white/80 flex-shrink-0 mt-0.5" />
-                    <span>Office No. 110, Bharat Chambars,
-Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
+
+                    <span className="text-sm leading-relaxed">
+                      Office No. 110, Bharat Chambars,
+                      Baroda Street Back Side Masjid Bundar East,
+                      Mumbai - 400009
+                    </span>
                   </div>
+
+                  {/* Phone */}
                   <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-white/80" />
-                    <a href="tel:+918433872243" className="hover:text-emerald-200 transition-colors">
+                    <Phone className="w-5 h-5 text-white/80 flex-shrink-0" />
+
+                    <a
+                      href={`tel:+${CONTACT_NUMBER}`}
+                      className="text-sm hover:text-emerald-200 transition-colors"
+                    >
                       +91 8433872243
                     </a>
                   </div>
+
+                  {/* Email */}
                   <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-white/80" />
-                    <a href="mailto:info@evergreenlogix.com" className="hover:text-emerald-200 transition-colors">
+                    <Mail className="w-5 h-5 text-white/80 flex-shrink-0" />
+
+                    <a
+                      href="mailto:info@evergreenlogix.com"
+                      className="text-sm hover:text-emerald-200 transition-colors break-all"
+                    >
                       info@evergreenlogix.com
                     </a>
                   </div>
+
+                  {/* Support */}
                   <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-white/80" />
-                    <span>24/7 Support Available</span>
+                    <Clock className="w-5 h-5 text-white/80 flex-shrink-0" />
+
+                    <span className="text-sm">
+                      24/7 Support Available
+                    </span>
                   </div>
+
                 </div>
+
+                {/* Call & WhatsApp Buttons */}
+                <div className="grid grid-cols-2 gap-3 mt-7 pt-6 border-t border-white/20">
+
+                  {/* Call Button */}
+                  <a
+                    href={`tel:+${CONTACT_NUMBER}`}
+                    className="flex items-center justify-center gap-2 bg-white text-emerald-700 py-3 px-2 rounded-xl font-semibold text-sm hover:bg-emerald-50 transition-all duration-300 hover:-translate-y-1 shadow-md"
+                  >
+                    <Phone className="w-5 h-5" />
+                    Call Now
+                  </a>
+
+                  {/* WhatsApp Button */}
+                  <a
+                    href={`https://wa.me/${CONTACT_NUMBER}?text=${encodeURIComponent(
+                      "Hello, I would like to know more about your services."
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-green-500 text-white py-3 px-2 rounded-xl font-semibold text-sm hover:bg-green-600 transition-all duration-300 hover:-translate-y-1 shadow-md"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    WhatsApp
+                  </a>
+
+                </div>
+
               </div>
 
-              {/* Working Hours */}
+              {/* ================= WORKING HOURS ================= */}
               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-3">Working Hours</h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex justify-between">
+
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-emerald-600" />
+                  Working Hours
+                </h3>
+
+                <div className="space-y-3 text-sm text-gray-600">
+
+                  <div className="flex justify-between gap-2">
                     <span>Monday - Friday</span>
-                    <span>9:00 AM - 9:00 PM</span>
+                    <span className="font-medium text-gray-800">
+                      9:00 AM - 9:00 PM
+                    </span>
                   </div>
-                  <div className="flex justify-between">
+
+                  <div className="flex justify-between gap-2">
                     <span>Saturday</span>
-                    <span>10:00 AM - 6:00 PM</span>
+                    <span className="font-medium text-gray-800">
+                      10:00 AM - 6:00 PM
+                    </span>
                   </div>
-                  <div className="flex justify-between">
+
+                  <div className="flex justify-between gap-2">
                     <span>Sunday</span>
-                    <span>Closed</span>
+                    <span className="font-medium text-red-500">
+                      Closed
+                    </span>
                   </div>
+
                 </div>
               </div>
 
-              {/* Social */}
+              {/* ================= SOCIAL MEDIA ================= */}
               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-3">Follow Us</h3>
+
+                <h3 className="font-semibold text-gray-900 mb-4">
+                  Follow Us
+                </h3>
+
                 <div className="flex gap-3">
-                  {[FaFacebook, FaInstagram, FaTwitter, FaLinkedin].map((Icon, i) => (
+
+                  {[
+                    {
+                      Icon: FaFacebook,
+                      name: "Facebook",
+                      color: "hover:bg-blue-600",
+                      url: "#",
+                    },
+                    {
+                      Icon: FaInstagram,
+                      name: "Instagram",
+                      color: "hover:bg-pink-500",
+                      url: "#",
+                    },
+                    {
+                      Icon: FaTwitter,
+                      name: "Twitter",
+                      color: "hover:bg-sky-500",
+                      url: "#",
+                    },
+                    {
+                      Icon: FaLinkedin,
+                      name: "LinkedIn",
+                      color: "hover:bg-blue-700",
+                      url: "#",
+                    },
+                  ].map(({ Icon, name, color, url }) => (
                     <a
-                      key={i}
-                      href="#"
-                      className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-emerald-500 transition-all duration-300 hover:scale-110"
+                      key={name}
+                      href={url}
+                      aria-label={name}
+                      className={`w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center ${color} transition-all duration-300 hover:scale-110 group`}
                     >
-                      <Icon className="w-5 h-5 text-gray-600 hover:text-white transition-colors" />
+                      <Icon className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
                     </a>
                   ))}
+
                 </div>
               </div>
+
             </div>
           </div>
         </div>
       </section>
+
+      {/* ================= FLOATING WHATSAPP BUTTON ================= */}
+      <a
+        href={`https://wa.me/${CONTACT_NUMBER}?text=${encodeURIComponent(
+          "Hello, I would like to know more about your services."
+        )}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat with us on WhatsApp"
+        className="fixed bottom-6 right-5 md:bottom-8 md:right-8 z-50 w-14 h-14 bg-green-500 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-green-600 hover:scale-110 transition-all duration-300"
+      >
+        <MessageCircle className="w-7 h-7" />
+      </a>
     </>
   );
 };
 
 export default Contact;
+
+
+
+
+// // src/pages/Contact.jsx
+// import React, { useState } from "react";
+// import sendContactEmailService from "../services/sendContactEmailService";
+// import {
+//   MapPin,
+//   Phone,
+//   Mail,
+//   MessageCircle,
+//   Send,
+//   Clock,
+// } from "lucide-react";
+// import {
+//   FaFacebook,
+//   FaTwitter,
+//   FaInstagram,
+//   FaLinkedin,
+// } from "react-icons/fa";
+// import { Link } from "react-router-dom";
+
+// const INITIAL_FORM = { name: "", email: "", mobile: "", subject: "", message: "" };
+
+// const Contact = () => {
+//   const [form, setForm] = useState(INITIAL_FORM);
+//   const [loading, setLoading] = useState(false);
+//   const [success, setSuccess] = useState("");
+//   const [error, setError] = useState("");
+
+//   const handleChange = (e) => {
+//     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+//     setError("");
+//     setSuccess("");
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     const { name, email, mobile, subject, message } = form;
+//     if (!name || !email || !mobile || !subject || !message) {
+//       setError("All fields are required.");
+//       return;
+//     }
+//     setLoading(true);
+//     setError("");
+//     setSuccess("");
+//     try {
+//       const res = await sendContactEmailService(name, email, mobile, subject, message);
+//       if (res?.status === 200) {
+//         setSuccess("Your message has been sent successfully! We'll get back to you soon.");
+//         setForm(INITIAL_FORM);
+//       } else {
+//         setError(res?.message || "Something went wrong. Please try again.");
+//       }
+//     } catch {
+//       setError("Failed to send message. Please try again later.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <>
+//       {/* Hero */}
+//       <section
+//         className="min-h-[40vh] md:min-h-[50vh] flex items-center justify-center bg-cover bg-center relative"
+//         style={{
+//           backgroundImage: "url('/images/contact-bg.jpg')",
+//         }}
+//       >
+//         <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/80 to-emerald-800/60" />
+//         <div className="relative text-center px-4">
+//           <span className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-4 border border-white/20">
+//             Get In Touch
+//           </span>
+//           <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+//             Contact Us
+//           </h1>
+//           <p className="text-white/80 text-lg mt-2">We're here to help you 24/7</p>
+//         </div>
+//       </section>
+
+//       {/* Contact Section */}
+//       <section className="py-20 bg-gray-50">
+//         <div className="max-w-7xl mx-auto px-6">
+//           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+//             {/* Form */}
+//             <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100">
+//               <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
+//                 Send Us a Message
+//               </h2>
+//               <p className="text-gray-500 mb-6">We'll get back to you within 24 hours</p>
+
+//               {/* Success banner */}
+//               {success && (
+//                 <div className="mb-4 flex items-start gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-4 py-3 text-sm font-medium">
+//                   <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+//                   {success}
+//                 </div>
+//               )}
+//               {/* Error banner */}
+//               {error && (
+//                 <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm font-medium">
+//                   <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+//                   {error}
+//                 </div>
+//               )}
+
+//               <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                   <input
+//                     type="text"
+//                     name="name"
+//                     value={form.name}
+//                     onChange={handleChange}
+//                     placeholder="Your Name"
+//                     className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+//                   />
+//                   <input
+//                     type="email"
+//                     name="email"
+//                     value={form.email}
+//                     onChange={handleChange}
+//                     placeholder="Email"
+//                     className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+//                   />
+//                 </div>
+
+//                 <div className="flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all duration-200">
+//                   <img
+//                     src="https://flagcdn.com/w40/in.png"
+//                     alt="India"
+//                     className="w-5 h-4 mr-2 rounded-sm"
+//                   />
+//                   <span className="text-gray-700 text-sm mr-3 border-r pr-3">+91</span>
+//                   <input
+//                     type="tel"
+//                     name="mobile"
+//                     value={form.mobile}
+//                     onChange={handleChange}
+//                     placeholder="Enter phone number"
+//                     className="w-full outline-none text-gray-800 placeholder-gray-400 text-sm py-3"
+//                   />
+//                 </div>
+
+//                 <input
+//                   type="text"
+//                   name="subject"
+//                   value={form.subject}
+//                   onChange={handleChange}
+//                   placeholder="Subject"
+//                   className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+//                 />
+
+//                 <textarea
+//                   name="message"
+//                   value={form.message}
+//                   onChange={handleChange}
+//                   placeholder="Your Message"
+//                   className="w-full border border-gray-300 px-4 py-3 rounded-lg h-32 resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+//                 />
+
+//                 <button
+//                   type="submit"
+//                   disabled={loading}
+//                   className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200 hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+//                 >
+//                   {loading ? "Sending…" : "Send Message"}
+//                   {!loading && <Send className="w-5 h-5" />}
+//                 </button>
+//               </form>
+//             </div>
+
+//             {/* Contact Info */}
+//             <div className="lg:col-span-2 space-y-6">
+//               <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 md:p-8 text-white">
+//                 <h3 className="text-xl font-bold mb-4">Contact Information</h3>
+//                 <div className="space-y-4">
+//                   <div className="flex items-start gap-3">
+//                     <MapPin className="w-5 h-5 text-white/80 flex-shrink-0 mt-0.5" />
+//                     <span>Office No. 110, Bharat Chambars,
+// Baroda Street Back Side Masjid Bundar East, Mumbai- 400009</span>
+//                   </div>
+//                   <div className="flex items-center gap-3">
+//                     <Phone className="w-5 h-5 text-white/80" />
+//                     <a href="tel:+918433872243" className="hover:text-emerald-200 transition-colors">
+//                       +91 8433872243
+//                     </a>
+//                   </div>
+//                   <div className="flex items-center gap-3">
+//                     <Mail className="w-5 h-5 text-white/80" />
+//                     <a href="mailto:info@evergreenlogix.com" className="hover:text-emerald-200 transition-colors">
+//                       info@evergreenlogix.com
+//                     </a>
+//                   </div>
+//                   <div className="flex items-center gap-3">
+//                     <Clock className="w-5 h-5 text-white/80" />
+//                     <span>24/7 Support Available</span>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Working Hours */}
+//               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+//                 <h3 className="font-semibold text-gray-900 mb-3">Working Hours</h3>
+//                 <div className="space-y-2 text-sm text-gray-600">
+//                   <div className="flex justify-between">
+//                     <span>Monday - Friday</span>
+//                     <span>9:00 AM - 9:00 PM</span>
+//                   </div>
+//                   <div className="flex justify-between">
+//                     <span>Saturday</span>
+//                     <span>10:00 AM - 6:00 PM</span>
+//                   </div>
+//                   <div className="flex justify-between">
+//                     <span>Sunday</span>
+//                     <span>Closed</span>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Social */}
+//               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+//                 <h3 className="font-semibold text-gray-900 mb-3">Follow Us</h3>
+//                 <div className="flex gap-3">
+//                   {[FaFacebook, FaInstagram, FaTwitter, FaLinkedin].map((Icon, i) => (
+//                     <a
+//                       key={i}
+//                       href="#"
+//                       className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-emerald-500 transition-all duration-300 hover:scale-110"
+//                     >
+//                       <Icon className="w-5 h-5 text-gray-600 hover:text-white transition-colors" />
+//                     </a>
+//                   ))}
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </section>
+//     </>
+//   );
+// };
+
+// export default Contact;
