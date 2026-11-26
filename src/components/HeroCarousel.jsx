@@ -114,12 +114,16 @@ const HeroCarousel = () => {
                   Get Started
                 </button>
 
-
+                <a
+                  href="tel:+918530470626"
+                  className="hover:text-emerald-400 transition-colors"
+                >
                 <div
                   className="group flex items-center gap-2 justify-center bg-gradient-to-r from-emerald-400 to-emerald-600 text-white px-8 py-4 text-base md:text-lg rounded-full hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 font-semibold"
                 >
                   <Phone className="w-5 h-5 text-white" /> <p>Call For Enquiry</p>
                 </div>
+                </a>
               </div>
             </div>
           </div>
