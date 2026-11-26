@@ -5,6 +5,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import FloatingChatbot from "./components/FloatingChatbot";
+import FloatingPhone from "./components/FloatingPhone";
 
 // Home components
 import HeroCarousel from "./components/HeroCarousel";
@@ -109,6 +110,11 @@ function App() {
         }
       </div>
       <MobileBottomNav />
+      {
+        (pathname.startsWith('/dashboard'))
+        ? null 
+        : <FloatingPhone />
+      }
       <FloatingChatbot />
     </>
   );
