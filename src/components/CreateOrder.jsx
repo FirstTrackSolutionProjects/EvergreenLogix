@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,7 +6,13 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import WarehouseSelect from './UiComponents/WarehouseSelect';
 import { toast } from 'react-toastify';
+import { Sparkles, Loader2 } from 'lucide-react';
 import hasMultipleBoxes from '../helpers/hasMultipleBoxes';
+import {
+  getInvoiceAutoFillUploadUrlService,
+  uploadInvoiceToS3PostService,
+  getInvoiceAutoFillStatusService,
+} from '../services/invoiceAutoFillServices/invoiceAutoFillService';
 const API_URL = import.meta.env.VITE_APP_API_URL
 
 const getTodaysDate = () => {
@@ -180,7 +186,7 @@ const FullDetails = () => {
   useEffect(() => {
     console.log(errors)
   }, [errors])
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: 'orders'
   });
@@ -312,6 +318,135 @@ const FullDetails = () => {
       toast.error('An error occurred during creating order');
     }
   };
+  const [autoFillFile, setAutoFillFile] = useState(null);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const pollTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const applyExtractedInvoiceData = (data) => {
+    if (!data) return;
+
+    if (data.invoiceNumber) setValue('invoiceNumber', data.invoiceNumber);
+    if (data.invoiceDate) setValue('invoiceDate', data.invoiceDate);
+    if (data.totalInvoiceAmount !== undefined && data.totalInvoiceAmount !== null) {
+      setValue('invoiceAmount', data.totalInvoiceAmount);
+    }
+    if (data.customerName) setValue('name', data.customerName);
+    if (data.customerPhone) setValue('phone', data.customerPhone);
+    if (data.customerAddress) setValue('address', data.customerAddress.slice(0, 300));
+    if (data.customerPincode) setValue('postcode', data.customerPincode);
+    if (data.customerCity) setValue('city', data.customerCity);
+    if (data.customerState) setValue('state', data.customerState);
+
+    if (Array.isArray(data.lineItems) && data.lineItems.length > 0) {
+      const mappedOrders = data.lineItems.map((item) => ({
+        box_no: '1',
+        product_name: item.description || '',
+        product_quantity: item.quantity || 1,
+        selling_price: item.unitPrice || 0,
+        tax_in_percentage: 0,
+      }));
+      replace(mappedOrders);
+    }
+  };
+
+  const handleAutoFillInvoiceChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setAutoFillFile(null);
+      return;
+    }
+
+    const validExtension = /\.(pdf|jpg|jpeg|png)$/i.test(file.name);
+    if (!validExtension) {
+      toast.error('Invoice must be a PDF or Image (.pdf, .jpg, .jpeg, .png)');
+      e.target.value = '';
+      setAutoFillFile(null);
+      return;
+    }
+
+    const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+    if (file.size > MAX_SIZE_BYTES) {
+      toast.error('Invoice file size must not exceed 2 MB');
+      e.target.value = '';
+      setAutoFillFile(null);
+      return;
+    }
+
+    setAutoFillFile(file);
+  };
+
+  const handleInvoiceAutoFill = async () => {
+    if (!autoFillFile) {
+      toast.warn('Please select an invoice file first');
+      return;
+    }
+
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+    }
+
+    setIsAutoFilling(true);
+    try {
+      // 1. Get S3 Presigned POST URL
+      const { url, fields } = await getInvoiceAutoFillUploadUrlService(autoFillFile.name);
+      const s3Key = fields?.key;
+      if (!url || !fields || !s3Key) {
+        throw new Error('Invalid upload URL response from server');
+      }
+
+      // 2. Upload file directly to S3 via POST
+      await uploadInvoiceToS3PostService(url, fields, autoFillFile);
+
+      // 3. Poll status route until SUCCESS, FAILED, or timeout
+      const POLL_INTERVAL_MS = 1000;
+      const MAX_ATTEMPTS = 120; // ~2 minutes
+
+      const pollStatus = async (attempt = 1) => {
+        try {
+          const result = await getInvoiceAutoFillStatusService(s3Key);
+
+          if (result.status === 'SUCCESS') {
+            applyExtractedInvoiceData(result.data);
+            toast.success(result.message || 'Invoice parsed successfully');
+            setIsAutoFilling(false);
+            return;
+          }
+
+          if (result.status === 'FAILED') {
+            toast.error(result.message || 'Failed to extract invoice data');
+            setIsAutoFilling(false);
+            return;
+          }
+
+          if (attempt >= MAX_ATTEMPTS) {
+            toast.error('Invoice processing timed out. Please try again.');
+            setIsAutoFilling(false);
+            return;
+          }
+
+          pollTimeoutRef.current = setTimeout(() => pollStatus(attempt + 1), POLL_INTERVAL_MS);
+        } catch (err) {
+          toast.error(err?.message || 'Failed to check invoice extraction status');
+          setIsAutoFilling(false);
+        }
+      };
+
+      pollTimeoutRef.current = setTimeout(() => pollStatus(1), POLL_INTERVAL_MS);
+    } catch (error) {
+      console.error('Invoice auto-fill error:', error);
+      toast.error(error?.message || 'Failed to upload invoice for auto-fill');
+      setIsAutoFilling(false);
+    }
+  };
+
   const [invoice, setInvoice] = useState(null);
   const handleInvoice = (e) => {
     const { files } = e.target;
@@ -366,6 +501,48 @@ const FullDetails = () => {
       <div className="text-3xl md:text-4xl font-bold text-gray-800 text-center mb-10">Enter Shipping Details</div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Auto-Fill from Invoice Card */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm border border-blue-200">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-blue-700 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+                Auto-Fill Order from Invoice
+              </h2>
+              <p className="text-xs text-gray-600 mt-1">
+                Upload an invoice (PDF, JPG, JPEG, PNG — Max 2 MB) to automatically fill buyer, address, items, and invoice details.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleAutoFillInvoiceChange}
+                disabled={isAutoFilling}
+                className="border border-blue-200 bg-white py-1.5 px-3 rounded-lg text-sm file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-60"
+              />
+              <button
+                type="button"
+                onClick={handleInvoiceAutoFill}
+                disabled={!autoFillFile || isAutoFilling}
+                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm whitespace-nowrap"
+              >
+                {isAutoFilling ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Extracting...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Auto-Fill
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Warehouse Selection Card */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-xl font-semibold mb-6 border-b pb-2 text-blue-600">Pickup Warehouse</h2>
