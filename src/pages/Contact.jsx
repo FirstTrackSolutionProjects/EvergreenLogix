@@ -302,7 +302,7 @@ const Contact = () => {
 
                   {/* WhatsApp Button */}
                   <a
-                    href={`https://wa.me/+918530470626?text=${encodeURIComponent(
+                    href={`https://wa.me/+918433872243?text=${encodeURIComponent(
                       "Hello, I would like to know more about your services."
                     )}`}
                     target="_blank"
@@ -406,7 +406,7 @@ const Contact = () => {
 
       {/* ================= FLOATING WHATSAPP BUTTON ================= */}
       <a
-        href={`https://wa.me/+918530470626?text=${encodeURIComponent(
+        href={`https://wa.me/+918433872243?text=${encodeURIComponent(
           "Hello, I would like to know more about your services."
         )}`}
         target="_blank"
