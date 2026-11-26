@@ -258,10 +258,10 @@ const Contact = () => {
                     <Phone className="w-5 h-5 text-white/80 flex-shrink-0" />
 
                     <a
-                      href={`tel:+${CONTACT_NUMBER}`}
-                      className="text-sm hover:text-emerald-200 transition-colors"
+                      href="tel:+918530470626"
+                      className="hover:text-emerald-200 transition-colors"
                     >
-                      +91 8433872243
+                      +91 8530470626
                     </a>
                   </div>
 
@@ -293,7 +293,7 @@ const Contact = () => {
 
                   {/* Call Button */}
                   <a
-                    href={`tel:+${CONTACT_NUMBER}`}
+                    href="tel:+918530470626"
                     className="flex items-center justify-center gap-2 bg-white text-emerald-700 py-3 px-2 rounded-xl font-semibold text-sm hover:bg-emerald-50 transition-all duration-300 hover:-translate-y-1 shadow-md"
                   >
                     <Phone className="w-5 h-5" />
@@ -302,7 +302,7 @@ const Contact = () => {
 
                   {/* WhatsApp Button */}
                   <a
-                    href={`https://wa.me/${CONTACT_NUMBER}?text=${encodeURIComponent(
+                    href={`https://wa.me/+918530470626?text=${encodeURIComponent(
                       "Hello, I would like to know more about your services."
                     )}`}
                     target="_blank"
@@ -406,7 +406,7 @@ const Contact = () => {
 
       {/* ================= FLOATING WHATSAPP BUTTON ================= */}
       <a
-        href={`https://wa.me/${CONTACT_NUMBER}?text=${encodeURIComponent(
+        href={`https://wa.me/+918530470626?text=${encodeURIComponent(
           "Hello, I would like to know more about your services."
         )}`}
         target="_blank"
