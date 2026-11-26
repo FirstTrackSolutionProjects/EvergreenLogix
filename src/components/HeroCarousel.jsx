@@ -1,7 +1,7 @@
 // src/components/HeroCarousel.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, Phone } from "lucide-react";
 
 const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -113,6 +113,13 @@ const HeroCarousel = () => {
                 >
                   Get Started
                 </button>
+
+
+                <div
+                  className="group flex items-center gap-2 justify-center bg-gradient-to-r from-emerald-400 to-emerald-600 text-white px-8 py-4 text-base md:text-lg rounded-full hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 font-semibold"
+                >
+                  <Phone className="w-5 h-5 text-white" /> <p>Call For Enquiry</p>
+                </div>
               </div>
             </div>
           </div>
