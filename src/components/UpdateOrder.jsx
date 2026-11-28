@@ -1,5 +1,4 @@
 import cloneOrderService from "../services/orderServices/cloneOrderService";
-import downloadShipmentPodService from "../services/shipmentServices/downloadShipmentPodService";
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { toast } from "react-toastify";
@@ -2269,24 +2268,6 @@ const Listing = ({ step, setStep }) => {
       }
     };
 
-  const handleDownloadPod = async (shipment) => {
-    setActionState(shipment.ord_id, 'downloadingPod', true);
-    try {
-      toast.info("Fetching PODs, please wait...");
-      const pods = await downloadShipmentPodService(shipment.ord_id);
-      if (!pods.length) {
-        toast.info("No PODs available for this order yet");
-        return;
-      }
-      toast.success(`Downloaded ${pods.length} POD${pods.length > 1 ? 's' : ''}`);
-    } catch (error) {
-      console.error(error);
-      toast.error(error?.message || "Failed to download POD");
-    } finally {
-      setActionState(shipment.ord_id, 'downloadingPod', false);
-    }
-  };
-
   const handleTrackAndShare = async (reportRow) => {
     if (!reportRow?.awb) {
       toast.error("AWB number is not available for this shipment.");
@@ -2610,20 +2591,6 @@ const Listing = ({ step, setStep }) => {
                 sx={{ borderRadius: '4px' }}
               >
                 Label
-              </Button>
-            ) : null}
-
-            {/* POD Button - only for shipped, non-cancelled, non-processing orders */}
-            {isShipped && !isProcessing && !isCancelled ? (
-              <Button
-                variant="outlined"
-                color="success"
-                size="small"
-                onClick={() => handleDownloadPod(params.row)}
-                disabled={getActionState(params.row.ord_id, 'downloadingPod')}
-                sx={{ borderRadius: '4px' }}
-              >
-                {getActionState(params.row.ord_id, 'downloadingPod') ? 'Downloading...' : 'POD'}
               </Button>
             ) : null}
 
