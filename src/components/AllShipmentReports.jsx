@@ -31,6 +31,7 @@ import { DOMESTIC_SHIPMENT_REPORT_STATUS_ENUMS } from "@/Constants";
 
 // Import the new TrackingShareDialog component
 import TrackingShareDialog from './TrackingShareDialog'; // You'll create this file
+import downloadShipmentPodService from "../services/shipmentServices/downloadShipmentPodService";
 
 const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -459,6 +460,28 @@ const Listing = () => {
     })
   };
 
+  const [downloadingPodIds, setDownloadingPodIds] = useState({});
+
+  const handleDownloadPod = async (reportRow) => {
+    const orderId = reportRow?.ord_id;
+    if (!orderId) return;
+    setDownloadingPodIds((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      toast.info("Fetching PODs, please wait...");
+      const pods = await downloadShipmentPodService(orderId);
+      if (!pods.length) {
+        toast.info("No PODs available for this order yet");
+        return;
+      }
+      toast.success(`Downloaded ${pods.length} POD${pods.length > 1 ? 's' : ''}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.message || "Failed to download POD");
+    } finally {
+      setDownloadingPodIds((prev) => ({ ...prev, [orderId]: false }));
+    }
+  };
+
     // NEW: Function to handle tracking and sharing
   const handleTrackAndShare = async (reportRow) => {
     if (!reportRow?.awb) {
@@ -555,7 +578,7 @@ const Listing = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 320,
+      width: 380,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', gap: 1, flexWrap: 'wrap' }}>
             <Button
@@ -586,6 +609,18 @@ const Listing = () => {
                 onClick={() => handleTrackAndShare(params.row)}
               >
                 Track
+              </Button>
+          )}
+          {params.row.status?.toUpperCase() === 'DELIVERED' && (
+              <Button
+                variant="outlined"
+                color="success"
+                size="small"
+                disabled={Boolean(downloadingPodIds[params.row.ord_id])}
+                onClick={() => handleDownloadPod(params.row)}
+                sx={{ borderRadius: '4px' }}
+              >
+                {downloadingPodIds[params.row.ord_id] ? 'Downloading...' : 'POD'}
               </Button>
           )}
           {!params.row.cancelled && [1, 2, 6].includes(params.row.serviceId) && (
