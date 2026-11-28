@@ -980,6 +980,7 @@ const ShipCard = ({ price, shipment, setIsShipped, setIsShip, getParcels, wallet
     <Paper sx={{ p: 2, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Box>
         <div>{`${price.name}${price.publicServiceName ? ` - ${price.publicServiceName}` : ''}` + " " + price.weight}</div>
+        <div className="text-sm text-gray-700">{`Chargable Weight: ${price.chargableWeight}g`}</div>
         <Box sx={{ mt: 0.5 }}>
           <Box component="span" sx={{
             px: 1.2,
