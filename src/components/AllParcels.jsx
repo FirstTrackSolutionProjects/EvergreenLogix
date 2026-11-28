@@ -32,6 +32,7 @@ import { DOMESTIC_ORDER_STATUS_ENUMS } from "@/Constants";
 
 import WarehouseSelect from "./UiComponents/WarehouseSelect";
 import TrackingShareDialog from './TrackingShareDialog';
+import downloadShipmentPodService from "../services/shipmentServices/downloadShipmentPodService";
 
 const API_URL = import.meta.env.VITE_APP_API_URL
 const ManageForm = ({ isManage, setIsManage, shipment, isShipped }) => {
@@ -1416,6 +1417,27 @@ const Listing = ({ step, setStep }) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isTrackingShareOpen, setIsTrackingShareOpen] = useState(false);
   const [currentTrackingShareData, setCurrentTrackingShareData] = useState(null);
+  const [downloadingPodIds, setDownloadingPodIds] = useState({});
+
+  const handleDownloadPod = async (shipment) => {
+    const orderId = shipment?.ord_id;
+    if (!orderId) return;
+    setDownloadingPodIds((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      toast.info("Fetching PODs, please wait...");
+      const pods = await downloadShipmentPodService(orderId);
+      if (!pods.length) {
+        toast.info("No PODs available for this order yet");
+        return;
+      }
+      toast.success(`Downloaded ${pods.length} POD${pods.length > 1 ? 's' : ''}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.message || "Failed to download POD");
+    } finally {
+      setDownloadingPodIds((prev) => ({ ...prev, [orderId]: false }));
+    }
+  };
 
   const handleTrackAndShare = async (reportRow) => {
     if (!reportRow?.awb) {
@@ -1601,9 +1623,12 @@ const Listing = ({ step, setStep }) => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 280,
+      width: 360,
       renderCell: (params) => {
         const isShipped = Boolean(params.row.awb);
+        const isCancelled = Boolean(params.row.cancelled);
+        const isProcessing = Boolean(params.row.in_process);
+        const isDownloadingPod = Boolean(downloadingPodIds[params.row.ord_id]);
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', gap: 1, flexWrap: 'wrap' }}>
             <Button
@@ -1635,6 +1660,18 @@ const Listing = ({ step, setStep }) => {
                 onClick={() => handleTrackAndShare(params.row)}
               >
                 Track
+              </Button>
+            )}
+            {isShipped && !isCancelled && !isProcessing && (
+              <Button
+                variant="outlined"
+                color="success"
+                size="small"
+                disabled={isDownloadingPod}
+                onClick={() => handleDownloadPod(params.row)}
+                sx={{ borderRadius: '4px' }}
+              >
+                {isDownloadingPod ? 'Downloading...' : 'POD'}
               </Button>
             )}
           </Box>
