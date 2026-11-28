@@ -623,7 +623,7 @@ const Listing = () => {
                 {downloadingPodIds[params.row.ord_id] ? 'Downloading...' : 'POD'}
               </Button>
           )}
-          {!params.row.cancelled && [1, 2, 6].includes(params.row.serviceId) && (
+          {!params.row.cancelled && params.row.status?.toUpperCase() !== 'DELIVERED' && (
               <Button
                 variant="contained"
                 color="error"
